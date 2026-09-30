@@ -89,6 +89,13 @@ identity_providers:
         algorithm: 'RS256'
         use: 'sig'
         key: {{ .Data.data.OIDC_JWKS_KEY | toJSON }}
+    # Komodo and OpenBao name the user from the ID token alone, which Authelia keeps minimal unless told otherwise.
+    claims_policies:
+      id_token_profile:
+        id_token:
+          - 'preferred_username'
+          - 'email'
+          - 'name'
     clients:
       - client_id: 'outline'
         client_name: 'Outline'
@@ -131,5 +138,52 @@ identity_providers:
         response_modes:
           - 'query'
         token_endpoint_auth_method: 'client_secret_post'
+        userinfo_signed_response_alg: 'none'
+      - client_id: 'komodo'
+        client_name: 'Komodo'
+        client_secret: {{ .Data.data.KOMODO_CLIENT_SECRET_DIGEST | toJSON }}
+        public: false
+        authorization_policy: 'one_factor'
+        consent_mode: 'implicit'
+        claims_policy: 'id_token_profile'
+        require_pkce: true
+        pkce_challenge_method: 'S256'
+        redirect_uris:
+          - 'https://komodo.ops.home.arpa/auth/oidc/callback'
+        scopes:
+          - 'openid'
+          - 'profile'
+          - 'email'
+        grant_types:
+          - 'authorization_code'
+        response_types:
+          - 'code'
+        response_modes:
+          - 'query'
+        token_endpoint_auth_method: 'client_secret_basic'
+        userinfo_signed_response_alg: 'none'
+      - client_id: 'openbao'
+        client_name: 'OpenBao'
+        client_secret: {{ .Data.data.OPENBAO_CLIENT_SECRET_DIGEST | toJSON }}
+        public: false
+        authorization_policy: 'one_factor'
+        consent_mode: 'implicit'
+        claims_policy: 'id_token_profile'
+        require_pkce: false
+        # The second URI is the `bao login -method=oidc` listener on the workstation.
+        redirect_uris:
+          - 'https://openbao.ops.home.arpa/ui/vault/auth/oidc/oidc/callback'
+          - 'http://localhost:8250/oidc/callback'
+        scopes:
+          - 'openid'
+          - 'profile'
+          - 'email'
+        grant_types:
+          - 'authorization_code'
+        response_types:
+          - 'code'
+        response_modes:
+          - 'query'
+        token_endpoint_auth_method: 'client_secret_basic'
         userinfo_signed_response_alg: 'none'
 {{ end -}}
