@@ -15,3 +15,31 @@ name = "Sync"
 executions = [
   { execution.type = "RunSync", execution.params.sync = "homelab-komodo" },
 ]
+
+# Run after a rebuild, once OpenBao is deployed and unsealed: every stack with secrets needs it.
+[[procedure]]
+name = "cold-start"
+description = "Deploy every app stack in dependency order. Unseal OpenBao first."
+tags = ["komodo"]
+
+[[procedure.config.stage]]
+name = "Databases"
+executions = [
+  { execution.type = "DeployStack", execution.params.stack = "postgres", execution.params.services = [] },
+  { execution.type = "DeployStack", execution.params.stack = "redis", execution.params.services = [] },
+]
+
+[[procedure.config.stage]]
+name = "Identity"
+executions = [
+  { execution.type = "DeployStack", execution.params.stack = "authelia", execution.params.services = [] },
+]
+
+[[procedure.config.stage]]
+name = "Apps"
+executions = [
+  { execution.type = "DeployStack", execution.params.stack = "kaneo", execution.params.services = [] },
+  { execution.type = "DeployStack", execution.params.stack = "outline", execution.params.services = [] },
+  { execution.type = "DeployStack", execution.params.stack = "glance", execution.params.services = [] },
+  { execution.type = "DeployStack", execution.params.stack = "beaverhabits", execution.params.services = [] },
+]
