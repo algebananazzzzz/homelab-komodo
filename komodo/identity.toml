@@ -1,0 +1,20 @@
+[[stack]]
+name = "authelia"
+description = "Single sign-on at auth.algebananazzzzz.com and auth.home.arpa."
+tags = ["identity"]
+deploy = true
+
+[stack.config]
+server = "svc-apps-01"
+repo = "algebananazzzzz/homelab-komodo"
+branch = "main"
+run_directory = "stacks/identity/authelia"
+file_paths = ["compose.yml"]
+ignore_services = ["secrets", "register"]
+environment = """
+OPENBAO_ROLE_ID=[[OPENBAO_ROLE_ID]]
+OPENBAO_SECRET_ID=[[OPENBAO_SECRET_ID]]
+"""
+# Authelia reads its rendered config only at startup, and Compose does not see template changes, so every deploy recreates.
+config_files = ["agent.hcl", "templates/configuration.yml.tpl", "templates/users_database.yml.tpl"]
+extra_args = ["--force-recreate"]
