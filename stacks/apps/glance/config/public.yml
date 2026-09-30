@@ -1,4 +1,4 @@
-# Served through the Cloudflare tunnel, so it links only to hostnames that are published there.
+# Served through the Cloudflare tunnel without a login, so it links only to hostnames published there and shows no personal or node data.
 $include: shared/base.yml
 
 # Only the viewer's browser knows whether it is on the tailnet, so the Glance server cannot run this check.
@@ -59,7 +59,3 @@ pages:
                     url: https://home.arpa
                     description: Connect to Tailscale first
                     icon: si:tailscale
-
-          - $include: shared/nodes.yml
-
-  - $include: shared/monitoring.yml
