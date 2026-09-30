@@ -1,4 +1,12 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": ["config:recommended"]
+  "extends": ["config:recommended"],
+  "packageRules": [
+    {
+      "description": "A new Postgres or Redis major starts on an empty data directory, so it is upgraded by hand.",
+      "matchPackageNames": ["postgres", "redis"],
+      "matchUpdateTypes": ["major"],
+      "enabled": false
+    }
+  ]
 }
