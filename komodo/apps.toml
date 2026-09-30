@@ -28,3 +28,39 @@ ignore_services = ["register"]
 # Compose does not see bind-mounted config change, so a config edit must recreate the containers to take effect.
 config_files = ["config/glance.yml", "config/public.yml", "config/shared/base.yml", "config/shared/monitoring.yml", "config/shared/nodes.yml", "config/shared/sidebar.yml"]
 extra_args = ["--force-recreate"]
+
+[[stack]]
+name = "kaneo"
+description = "Kanban boards at kaneo.algebananazzzzz.com."
+tags = ["apps"]
+deploy = true
+
+[stack.config]
+server = "svc-apps-01"
+repo = "algebananazzzzz/homelab-komodo"
+branch = "main"
+run_directory = "stacks/apps/kaneo"
+file_paths = ["compose.yml"]
+ignore_services = ["secrets", "register"]
+environment = """
+OPENBAO_ROLE_ID=[[OPENBAO_ROLE_ID]]
+OPENBAO_SECRET_ID=[[OPENBAO_SECRET_ID]]
+"""
+
+[[stack]]
+name = "outline"
+description = "Wiki at outline.algebananazzzzz.com."
+tags = ["apps"]
+deploy = true
+
+[stack.config]
+server = "svc-apps-01"
+repo = "algebananazzzzz/homelab-komodo"
+branch = "main"
+run_directory = "stacks/apps/outline"
+file_paths = ["compose.yml"]
+ignore_services = ["secrets", "register"]
+environment = """
+OPENBAO_ROLE_ID=[[OPENBAO_ROLE_ID]]
+OPENBAO_SECRET_ID=[[OPENBAO_SECRET_ID]]
+"""

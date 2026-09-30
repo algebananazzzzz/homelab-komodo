@@ -1,0 +1,13 @@
+{
+  "ID": "outline",
+  "Name": "outline",
+  "Port": 3001,
+  "Tags": [
+    "traefik.enable=true",
+    "traefik.http.routers.outline.entrypoints=web,websecure",
+    "traefik.http.routers.outline.rule=Host(`outline.algebananazzzzz.com`)",
+    "traefik.http.routers.outline.tls=true",
+    "traefik.http.services.outline.loadbalancer.server.port=3001"
+  ],
+  "Check": {"HTTP": "http://127.0.0.1:3001/_health", "Interval": "10s", "Timeout": "5s"}
+}
