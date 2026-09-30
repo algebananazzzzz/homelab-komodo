@@ -7,7 +7,12 @@
     "traefik.http.routers.beaverhabits.entrypoints=web,websecure",
     "traefik.http.routers.beaverhabits.rule=Host(`beaverhabits.svc.home.arpa`)",
     "traefik.http.routers.beaverhabits.tls=true",
-    "traefik.http.services.beaverhabits.loadbalancer.server.port=8082"
+    "traefik.http.services.beaverhabits.loadbalancer.server.port=8082",
+    "homelab-komodo"
   ],
-  "Check": {"HTTP": "http://127.0.0.1:8082/", "Interval": "10s", "Timeout": "5s"}
+  "Check": {
+    "HTTP": "http://127.0.0.1:8082/",
+    "Interval": "10s",
+    "Timeout": "5s"
+  }
 }
