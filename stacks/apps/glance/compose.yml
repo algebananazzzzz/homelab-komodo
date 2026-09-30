@@ -1,0 +1,47 @@
+name: glance
+
+x-glance: &glance
+  image: glanceapp/glance:v0.8.6
+  depends_on:
+    register:
+      condition: service_completed_successfully
+  environment:
+    TZ: Asia/Singapore
+    # Glance substitutes these into its config itself.
+    KANEO_HOSTNAME: kaneo.algebananazzzzz.com
+    OUTLINE_HOSTNAME: outline.algebananazzzzz.com
+    AUTH_HOSTNAME: auth.algebananazzzzz.com
+  volumes:
+    - ./config:/app/config:ro
+    - /etc/ssl/certs/ca-certificates.crt:/etc/ssl/certs/ca-certificates.crt:ro
+  restart: unless-stopped
+
+services:
+  register:
+    image: curlimages/curl:8.22.0
+    # Consul's API listens on the host. The agent keeps these registrations across restarts and reboots.
+    network_mode: host
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        set -e
+        for f in /consul/*.json; do
+          curl -sSf -X PUT --data-binary "@$$f" http://127.0.0.1:8500/v1/agent/service/register
+          echo "registered $$f"
+        done
+    volumes:
+      - ./consul:/consul:ro
+
+  glance:
+    <<: *glance
+    container_name: glance
+    ports:
+      - "8090:8080/tcp"
+
+  glance-public:
+    <<: *glance
+    container_name: glance-public
+    # The image's entrypoint pins the config path, so this is the only way to pick another file.
+    entrypoint: ["/app/glance", "--config", "/app/config/public.yml"]
+    ports:
+      - "8091:8080/tcp"

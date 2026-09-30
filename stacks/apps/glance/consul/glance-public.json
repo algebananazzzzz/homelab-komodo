@@ -1,0 +1,14 @@
+{
+  "ID": "glance-public",
+  "Name": "glance-public",
+  "Port": 8091,
+  "Tags": [
+    "traefik.enable=true",
+    "traefik.http.routers.glance-public.entrypoints=web,websecure",
+    "traefik.http.routers.glance-public.rule=Host(`glance.algebananazzzzz.com`)",
+    "traefik.http.routers.glance-public.tls=true",
+    "traefik.http.routers.glance-public.middlewares=authelia@file",
+    "traefik.http.services.glance-public.loadbalancer.server.port=8091"
+  ],
+  "Check": {"HTTP": "http://127.0.0.1:8091/", "Interval": "10s", "Timeout": "5s"}
+}

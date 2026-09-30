@@ -1,0 +1,37 @@
+name: beaverhabits
+
+services:
+  register:
+    image: curlimages/curl:8.22.0
+    # Consul's API listens on the host. The agent keeps these registrations across restarts and reboots.
+    network_mode: host
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        set -e
+        for f in /consul/*.json; do
+          curl -sSf -X PUT --data-binary "@$$f" http://127.0.0.1:8500/v1/agent/service/register
+          echo "registered $$f"
+        done
+    volumes:
+      - ./consul:/consul:ro
+
+  beaverhabits:
+    container_name: beaverhabits
+    image: daya0576/beaverhabits:0.10.0
+    depends_on:
+      register:
+        condition: service_completed_successfully
+    environment:
+      HABITS_STORAGE: USER_DISK
+      # Bypasses login: the session cookie is SameSite=Lax, so it never survives the Glance iframe.
+      TRUSTED_LOCAL_EMAIL: daniel.zhouqx@gmail.com
+    ports:
+      - "8082:8080/tcp"
+    volumes:
+      - data:/app/.user
+    restart: unless-stopped
+
+volumes:
+  data:
+    name: homelab-beaverhabits-data
