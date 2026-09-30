@@ -15,6 +15,8 @@ environment = """
 OPENBAO_ROLE_ID=[[OPENBAO_ROLE_ID]]
 OPENBAO_SECRET_ID=[[OPENBAO_SECRET_ID]]
 """
+# A deploy while OpenBao is sealed would replace containers that then never start, so it stops before Compose runs.
+pre_deploy.command = "curl -sf -o /dev/null --cacert ../../../openbao/openbao.crt https://openbao.service.consul:8200/v1/sys/health"
 # A sync redeploys a stack only when a listed file changes, so every file the stack reads is listed.
 config_files = ["consul/postgres.json", "initdb/10-databases.sql", "../../../openbao/agent.hcl"]
 
@@ -35,5 +37,7 @@ environment = """
 OPENBAO_ROLE_ID=[[OPENBAO_ROLE_ID]]
 OPENBAO_SECRET_ID=[[OPENBAO_SECRET_ID]]
 """
+# A deploy while OpenBao is sealed would replace containers that then never start, so it stops before Compose runs.
+pre_deploy.command = "curl -sf -o /dev/null --cacert ../../../openbao/openbao.crt https://openbao.service.consul:8200/v1/sys/health"
 # A sync redeploys a stack only when a listed file changes, so every file the stack reads is listed.
 config_files = ["consul/redis.json", "../../../openbao/agent.hcl"]

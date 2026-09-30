@@ -15,6 +15,8 @@ environment = """
 OPENBAO_ROLE_ID=[[OPENBAO_ROLE_ID]]
 OPENBAO_SECRET_ID=[[OPENBAO_SECRET_ID]]
 """
+# A deploy while OpenBao is sealed would replace containers that then never start, so it stops before Compose runs.
+pre_deploy.command = "curl -sf -o /dev/null --cacert ../../../openbao/openbao.crt https://openbao.service.consul:8200/v1/sys/health"
 # Authelia reads its rendered config only at startup, and Compose does not see template changes, so every deploy recreates.
 config_files = ["agent.hcl", "templates/configuration.yml.tpl", "templates/users_database.yml.tpl", "consul/authelia.json"]
 extra_args = ["--force-recreate"]
