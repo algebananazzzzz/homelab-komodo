@@ -11,6 +11,8 @@ branch = "main"
 run_directory = "stacks/apps/beaverhabits"
 file_paths = ["compose.yml"]
 ignore_services = ["register"]
+# A sync redeploys a stack only when a listed file changes, so every file the stack reads is listed.
+config_files = ["consul/beaverhabits.json"]
 
 [[stack]]
 name = "glance"
@@ -26,7 +28,7 @@ run_directory = "stacks/apps/glance"
 file_paths = ["compose.yml"]
 ignore_services = ["register"]
 # Compose does not see bind-mounted config change, so a config edit must recreate the containers to take effect.
-config_files = ["config/glance.yml", "config/public.yml", "config/shared/base.yml", "config/shared/monitoring.yml", "config/shared/nodes.yml", "config/shared/sidebar.yml"]
+config_files = ["config/glance.yml", "config/public.yml", "config/shared/base.yml", "config/shared/monitoring.yml", "config/shared/nodes.yml", "config/shared/sidebar.yml", "consul/glance.json", "consul/glance-public.json"]
 extra_args = ["--force-recreate"]
 
 [[stack]]
@@ -46,6 +48,8 @@ environment = """
 OPENBAO_ROLE_ID=[[OPENBAO_ROLE_ID]]
 OPENBAO_SECRET_ID=[[OPENBAO_SECRET_ID]]
 """
+# A sync redeploys a stack only when a listed file changes, so every file the stack reads is listed.
+config_files = ["consul/kaneo.json", "../../../openbao/agent.hcl"]
 
 [[stack]]
 name = "outline"
@@ -64,3 +68,5 @@ environment = """
 OPENBAO_ROLE_ID=[[OPENBAO_ROLE_ID]]
 OPENBAO_SECRET_ID=[[OPENBAO_SECRET_ID]]
 """
+# A sync redeploys a stack only when a listed file changes, so every file the stack reads is listed.
+config_files = ["consul/outline.json", "../../../openbao/agent.hcl"]
