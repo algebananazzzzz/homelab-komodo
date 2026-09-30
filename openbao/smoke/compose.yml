@@ -1,0 +1,47 @@
+name: secrets-smoke
+
+services:
+  secrets:
+    image: openbao/openbao:2.7.0
+    command: ["agent", "-config=/openbao/agent.hcl"]
+    # The /secrets volume starts root-owned, so the agent keeps root instead of dropping to the openbao user.
+    user: "0:0"
+    environment:
+      APP: ${SMOKE_APP:-smoke}
+      BAO_SKIP_DROP_ROOT: "true"
+    secrets:
+      - openbao_role_id
+      - openbao_secret_id
+    volumes:
+      - ../agent.hcl:/openbao/agent.hcl:ro
+      - ../openbao.crt:/openbao/ca.crt:ro
+      - secrets:/secrets
+
+  check:
+    image: busybox:1.36
+    depends_on:
+      secrets:
+        condition: service_completed_successfully
+    # $$ is Compose's escape for a literal $.
+    command:
+      - sh
+      - -c
+      - |
+        set -e
+        set -a
+        . /secrets/app.env
+        test "$$GREETING" = "it's a \$$HOME test"
+        test "$$PLAIN" = ok
+        echo SMOKE_OK
+    volumes:
+      - secrets:/secrets:ro
+
+secrets:
+  openbao_role_id:
+    environment: OPENBAO_ROLE_ID
+  openbao_secret_id:
+    environment: OPENBAO_SECRET_ID
+
+volumes:
+  secrets:
+    name: secrets-smoke
