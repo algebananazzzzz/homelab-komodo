@@ -1,0 +1,13 @@
+{
+  "ID": "registration-smoke",
+  "Name": "registration-smoke",
+  "Port": 18090,
+  "Tags": [
+    "traefik.enable=true",
+    "traefik.http.routers.registration-smoke.entrypoints=web,websecure",
+    "traefik.http.routers.registration-smoke.rule=Host(`registration-smoke.svc.home.arpa`)",
+    "traefik.http.routers.registration-smoke.tls=true",
+    "traefik.http.services.registration-smoke.loadbalancer.server.port=18090"
+  ],
+  "Check": {"HTTP": "http://127.0.0.1:18090/", "Interval": "10s", "Timeout": "5s"}
+}
