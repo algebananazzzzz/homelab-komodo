@@ -1,0 +1,16 @@
+# Komodo stays unreachable from GitHub, so it polls: a push to main deploys within 5 minutes without a webhook.
+[[procedure]]
+name = "sync"
+description = "Apply the komodo/ directory of homelab-komodo."
+tags = ["komodo"]
+
+[procedure.config]
+schedule_format = "English"
+schedule = "Every 5 minutes"
+schedule_alert = false
+
+[[procedure.config.stage]]
+name = "Sync"
+executions = [
+  { execution.type = "RunSync", execution.params.sync = "homelab-komodo" },
+]
