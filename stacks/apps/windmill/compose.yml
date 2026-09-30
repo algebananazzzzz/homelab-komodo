@@ -1,0 +1,111 @@
+name: windmill
+
+x-windmill: &windmill
+  image: ghcr.io/windmill-labs/windmill:1.820.0
+  # Trusts the homelab CA, which signs Authelia's and Traefik's certificates, loads the rendered secrets,
+  # refuses to start if one is missing, then runs the image's own command.
+  entrypoint: ["/bin/sh", "-c"]
+  command:
+    - |
+      update-ca-certificates
+      set -a
+      . /secrets/app.env
+      set +a
+      : "$${DATABASE_URL:?}"
+      exec windmill
+  # Windmill logs every job, and Docker's default driver never rotates them.
+  logging:
+    driver: json-file
+    options:
+      max-size: 20m
+      max-file: "5"
+  restart: unless-stopped
+
+services:
+  secrets:
+    image: openbao/openbao:2.7.0
+    command: ["agent", "-config=/openbao/agent.hcl"]
+    # The /secrets volume starts root-owned, so the agent keeps root instead of dropping to the openbao user.
+    user: "0:0"
+    environment:
+      APP: windmill
+      BAO_SKIP_DROP_ROOT: "true"
+    secrets:
+      - openbao_role_id
+      - openbao_secret_id
+    volumes:
+      - ../../../openbao/agent.hcl:/openbao/agent.hcl:ro
+      - ../../../openbao/openbao.crt:/openbao/ca.crt:ro
+      - secrets:/secrets
+
+  register:
+    image: curlimages/curl:8.22.0
+    # Consul's API listens on the host. The agent keeps these registrations across restarts and reboots.
+    network_mode: host
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        set -e
+        for f in /consul/*.json; do
+          curl -sSf -X PUT --data-binary "@$$f" http://127.0.0.1:8500/v1/agent/service/register
+          echo "registered $$f"
+        done
+    volumes:
+      - ./consul:/consul:ro
+
+  server:
+    <<: *windmill
+    container_name: windmill
+    depends_on:
+      secrets:
+        condition: service_completed_successfully
+      register:
+        condition: service_completed_successfully
+    environment:
+      MODE: server
+    ports:
+      - "8000:8000/tcp"
+    volumes:
+      - secrets:/secrets:ro
+      - logs:/tmp/windmill/logs
+      - /usr/local/share/ca-certificates/homelab-ca.crt:/usr/local/share/ca-certificates/homelab-ca.crt:ro
+
+  # Runs one job at a time, so a long job holds up the queue behind it.
+  worker:
+    <<: *windmill
+    container_name: windmill-worker
+    depends_on:
+      secrets:
+        condition: service_completed_successfully
+    environment:
+      MODE: worker
+      WORKER_GROUP: default
+      # Jobs see only the variables listed in WHITELIST_ENVS, so each runtime's CA setting is listed there.
+      REQUESTS_CA_BUNDLE: /etc/ssl/certs/ca-certificates.crt
+      SSL_CERT_FILE: /etc/ssl/certs/ca-certificates.crt
+      NODE_EXTRA_CA_CERTS: /usr/local/share/ca-certificates/homelab-ca.crt
+      DENO_TLS_CA_STORE: system,mozilla
+      WHITELIST_ENVS: REQUESTS_CA_BUNDLE,SSL_CERT_FILE,NODE_EXTRA_CA_CERTS,DENO_TLS_CA_STORE
+    deploy:
+      resources:
+        limits:
+          cpus: "1"
+          memory: 2G
+    volumes:
+      - secrets:/secrets:ro
+      - logs:/tmp/windmill/logs
+      - cache:/tmp/windmill/cache
+      - /usr/local/share/ca-certificates/homelab-ca.crt:/usr/local/share/ca-certificates/homelab-ca.crt:ro
+
+secrets:
+  openbao_role_id:
+    environment: OPENBAO_ROLE_ID
+  openbao_secret_id:
+    environment: OPENBAO_SECRET_ID
+
+volumes:
+  logs:
+    name: homelab-windmill-logs
+  cache:
+    name: homelab-windmill-cache
+  secrets:

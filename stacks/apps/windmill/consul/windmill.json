@@ -1,0 +1,13 @@
+{
+  "ID": "windmill",
+  "Name": "windmill",
+  "Port": 8000,
+  "Tags": [
+    "traefik.enable=true",
+    "traefik.http.routers.windmill.entrypoints=web,websecure",
+    "traefik.http.routers.windmill.rule=Host(`windmill.algebananazzzzz.com`)",
+    "traefik.http.routers.windmill.tls=true",
+    "traefik.http.services.windmill.loadbalancer.server.port=8000"
+  ],
+  "Check": {"HTTP": "http://127.0.0.1:8000/api/version", "Interval": "10s", "Timeout": "5s"}
+}

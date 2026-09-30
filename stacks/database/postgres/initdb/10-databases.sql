@@ -2,3 +2,4 @@
 CREATE DATABASE authelia;
 CREATE DATABASE kaneo;
 CREATE DATABASE outline;
+CREATE DATABASE windmill;

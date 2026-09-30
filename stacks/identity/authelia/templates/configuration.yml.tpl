@@ -186,4 +186,26 @@ identity_providers:
           - 'query'
         token_endpoint_auth_method: 'client_secret_basic'
         userinfo_signed_response_alg: 'none'
+      - client_id: 'windmill'
+        client_name: 'Windmill'
+        client_secret: {{ .Data.data.WINDMILL_CLIENT_SECRET_DIGEST | toJSON }}
+        public: false
+        authorization_policy: 'one_factor'
+        consent_mode: 'implicit'
+        require_pkce: false
+        redirect_uris:
+          - 'https://windmill.algebananazzzzz.com/user/login_callback/authelia'
+        scopes:
+          - 'openid'
+          - 'profile'
+          - 'email'
+          - 'groups'
+        grant_types:
+          - 'authorization_code'
+        response_types:
+          - 'code'
+        response_modes:
+          - 'query'
+        token_endpoint_auth_method: 'client_secret_basic'
+        userinfo_signed_response_alg: 'none'
 {{ end -}}

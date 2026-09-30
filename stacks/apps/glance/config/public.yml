@@ -42,6 +42,9 @@ pages:
               - title: Outline
                 url: https://${OUTLINE_HOSTNAME}
                 icon: si:outline
+              - title: Windmill
+                url: https://${WINDMILL_HOSTNAME}
+                icon: di:windmill
 
           - type: monitor
             title: Management
