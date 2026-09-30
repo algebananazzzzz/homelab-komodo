@@ -1,0 +1,35 @@
+[[stack]]
+name = "postgres"
+description = "Shared PostgreSQL for app stacks."
+tags = ["database"]
+deploy = true
+
+[stack.config]
+server = "svc-db-01"
+repo = "algebananazzzzz/homelab-komodo"
+branch = "main"
+run_directory = "stacks/database/postgres"
+file_paths = ["compose.yml"]
+ignore_services = ["secrets", "register"]
+environment = """
+OPENBAO_ROLE_ID=[[OPENBAO_ROLE_ID]]
+OPENBAO_SECRET_ID=[[OPENBAO_SECRET_ID]]
+"""
+
+[[stack]]
+name = "redis"
+description = "Shared Redis for app stacks."
+tags = ["database"]
+deploy = true
+
+[stack.config]
+server = "svc-db-01"
+repo = "algebananazzzzz/homelab-komodo"
+branch = "main"
+run_directory = "stacks/database/redis"
+file_paths = ["compose.yml"]
+ignore_services = ["secrets", "register"]
+environment = """
+OPENBAO_ROLE_ID=[[OPENBAO_ROLE_ID]]
+OPENBAO_SECRET_ID=[[OPENBAO_SECRET_ID]]
+"""

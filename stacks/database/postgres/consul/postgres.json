@@ -1,0 +1,6 @@
+{
+  "ID": "postgres",
+  "Name": "postgres",
+  "Port": 5432,
+  "Check": {"TCP": "127.0.0.1:5432", "Interval": "10s", "Timeout": "2s"}
+}

@@ -1,0 +1,76 @@
+name: postgres
+
+services:
+  secrets:
+    image: openbao/openbao:2.7.0
+    command: ["agent", "-config=/openbao/agent.hcl"]
+    # The /secrets volume starts root-owned, so the agent keeps root instead of dropping to the openbao user.
+    user: "0:0"
+    environment:
+      APP: postgres
+      BAO_SKIP_DROP_ROOT: "true"
+    secrets:
+      - openbao_role_id
+      - openbao_secret_id
+    volumes:
+      - ../../../openbao/agent.hcl:/openbao/agent.hcl:ro
+      - ../../../openbao/openbao.crt:/openbao/ca.crt:ro
+      - secrets:/secrets
+
+  register:
+    image: curlimages/curl:8.22.0
+    # Consul's API listens on the host. The agent keeps these registrations across restarts and reboots.
+    network_mode: host
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        set -e
+        for f in /consul/*.json; do
+          curl -sSf -X PUT --data-binary "@$$f" http://127.0.0.1:8500/v1/agent/service/register
+          echo "registered $$f"
+        done
+    volumes:
+      - ./consul:/consul:ro
+
+  postgres:
+    container_name: postgres
+    image: postgres:18.6
+    depends_on:
+      secrets:
+        condition: service_completed_successfully
+      register:
+        condition: service_completed_successfully
+    # Loads the rendered secrets, refuses to start if one is missing, then runs the image's own entrypoint and command.
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        set -a
+        . /secrets/app.env
+        set +a
+        : "$${POSTGRES_PASSWORD:?}"
+        exec docker-entrypoint.sh postgres
+    environment:
+      POSTGRES_USER: admin
+    ports:
+      - "5432:5432/tcp"
+    volumes:
+      - postgres-data:/var/lib/postgresql
+      - secrets:/secrets:ro
+      - ./initdb:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
+
+secrets:
+  openbao_role_id:
+    environment: OPENBAO_ROLE_ID
+  openbao_secret_id:
+    environment: OPENBAO_SECRET_ID
+
+volumes:
+  postgres-data:
+    name: homelab-postgres-data
+  secrets:
