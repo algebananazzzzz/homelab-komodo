@@ -5,8 +5,9 @@ description = "Apply the komodo/ directory of homelab-komodo."
 tags = ["komodo"]
 
 [procedure.config]
-schedule_format = "English"
-schedule = "Every 5 minutes"
+# Komodo turns the English "Every 5 minutes" into a cron its own validator rejects.
+schedule_format = "Cron"
+schedule = "0 */5 * * * *"
 schedule_alert = false
 
 [[procedure.config.stage]]
