@@ -1,22 +1,6 @@
 name: authelia
 
 services:
-  secrets:
-    image: openbao/openbao:2.7.0
-    command: ["agent", "-config=/openbao/agent.hcl"]
-    # The config volume starts root-owned, so the agent keeps root instead of dropping to the openbao user.
-    user: "0:0"
-    environment:
-      BAO_SKIP_DROP_ROOT: "true"
-    secrets:
-      - openbao_role_id
-      - openbao_secret_id
-    volumes:
-      - ./agent.hcl:/openbao/agent.hcl:ro
-      - ./templates:/openbao/templates:ro
-      - ../../../openbao/openbao.crt:/openbao/ca.crt:ro
-      - config:/config
-
   register:
     image: curlimages/curl:8.22.0
     # Consul's API listens on the host. The agent keeps these registrations across restarts and reboots.
@@ -36,21 +20,47 @@ services:
     container_name: authelia
     image: docker.io/authelia/authelia:4.39.20
     depends_on:
-      secrets:
-        condition: service_completed_successfully
       register:
         condition: service_completed_successfully
+    # The template filter only reads configuration.yml, so the users file is written here from the environment
+    # before the image's own entrypoint starts Authelia.
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        set -eu
+        umask 077
+        cat > /config/users_database.yml <<EOF
+        users:
+          danielz:
+            disabled: false
+            displayname: 'Daniel'
+            password: '$${USER_PASSWORD_DIGEST}'
+            email: 'daniel.zhouqx@gmail.com'
+            groups:
+              - 'admins'
+        EOF
+        exec /app/entrypoint.sh --config /etc/authelia/configuration.yml
+    environment:
+      X_AUTHELIA_CONFIG_FILTERS: template
+      SESSION_SECRET: ${SESSION_SECRET:?}
+      STORAGE_ENCRYPTION_KEY: ${STORAGE_ENCRYPTION_KEY:?}
+      JWT_SECRET: ${JWT_SECRET:?}
+      OIDC_HMAC_SECRET: ${OIDC_HMAC_SECRET:?}
+      # Base64 of the PEM key, since a Komodo variable holds one line.
+      OIDC_JWKS_KEY: ${OIDC_JWKS_KEY:?}
+      USER_PASSWORD_DIGEST: ${USER_PASSWORD_DIGEST:?}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?}
+      REDIS_PASSWORD: ${REDIS_PASSWORD:?}
+      OUTLINE_CLIENT_SECRET_DIGEST: ${OUTLINE_CLIENT_SECRET_DIGEST:?}
+      KANEO_CLIENT_SECRET_DIGEST: ${KANEO_CLIENT_SECRET_DIGEST:?}
+      KOMODO_CLIENT_SECRET_DIGEST: ${KOMODO_CLIENT_SECRET_DIGEST:?}
+      WINDMILL_CLIENT_SECRET_DIGEST: ${WINDMILL_CLIENT_SECRET_DIGEST:?}
     ports:
       - "9091:9091/tcp"
     volumes:
+      - ./configuration.yml:/etc/authelia/configuration.yml:ro
       - config:/config
     restart: unless-stopped
-
-secrets:
-  openbao_role_id:
-    environment: OPENBAO_ROLE_ID
-  openbao_secret_id:
-    environment: OPENBAO_SECRET_ID
 
 volumes:
   config:

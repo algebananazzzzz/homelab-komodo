@@ -1,22 +1,6 @@
 name: redis
 
 services:
-  secrets:
-    image: openbao/openbao:2.7.0
-    command: ["agent", "-config=/openbao/agent.hcl"]
-    # The /secrets volume starts root-owned, so the agent keeps root instead of dropping to the openbao user.
-    user: "0:0"
-    environment:
-      APP: redis
-      BAO_SKIP_DROP_ROOT: "true"
-    secrets:
-      - openbao_role_id
-      - openbao_secret_id
-    volumes:
-      - ../../../openbao/agent.hcl:/openbao/agent.hcl:ro
-      - ../../../openbao/openbao.crt:/openbao/ca.crt:ro
-      - secrets:/secrets
-
   register:
     image: curlimages/curl:8.22.0
     # Consul's API listens on the host. The agent keeps these registrations across restarts and reboots.
@@ -36,38 +20,22 @@ services:
     container_name: redis
     image: redis:8.10.2
     depends_on:
-      secrets:
-        condition: service_completed_successfully
       register:
         condition: service_completed_successfully
-    # Loads the rendered secrets and refuses to start without the password. Runs redis-server directly, as root, as before.
-    entrypoint: ["/bin/sh", "-c"]
-    command:
-      - |
-        set -a
-        . /secrets/app.env
-        set +a
-        : "$${REDIS_PASSWORD:?}"
-        exec redis-server --appendonly yes --maxmemory-policy noeviction --requirepass "$$REDIS_PASSWORD"
+    command: ["redis-server", "--appendonly", "yes", "--maxmemory-policy", "noeviction", "--requirepass", "${REDIS_PASSWORD:?}"]
+    environment:
+      REDISCLI_AUTH: ${REDIS_PASSWORD:?}
     ports:
       - "6379:6379/tcp"
     volumes:
       - redis-data:/data
-      - secrets:/secrets:ro
     healthcheck:
-      test: ["CMD-SHELL", ". /secrets/app.env && REDISCLI_AUTH=\"$$REDIS_PASSWORD\" redis-cli ping | grep PONG"]
+      test: ["CMD-SHELL", "redis-cli ping | grep PONG"]
       interval: 5s
       timeout: 3s
       retries: 20
     restart: unless-stopped
 
-secrets:
-  openbao_role_id:
-    environment: OPENBAO_ROLE_ID
-  openbao_secret_id:
-    environment: OPENBAO_SECRET_ID
-
 volumes:
   redis-data:
     name: homelab-redis-data
-  secrets:

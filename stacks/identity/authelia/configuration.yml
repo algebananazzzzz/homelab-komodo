@@ -1,4 +1,3 @@
-{{- with secret "kv/data/apps/authelia" -}}
 ---
 server:
   address: 'tcp://:9091'
@@ -41,7 +40,7 @@ access_control:
       policy: 'one_factor'
 
 session:
-  secret: {{ .Data.data.SESSION_SECRET | toJSON }}
+  secret: {{ mustEnv "SESSION_SECRET" | squote }}
   cookies:
     - domain: 'auth.home.arpa'
       authelia_url: 'https://auth.home.arpa'
@@ -56,7 +55,7 @@ session:
   redis:
     host: 'redis.service.consul'
     port: 6379
-    password: {{ .Data.data.REDIS_PASSWORD | toJSON }}
+    password: {{ mustEnv "REDIS_PASSWORD" | squote }}
 
 regulation:
   max_retries: 3
@@ -64,17 +63,17 @@ regulation:
   ban_time: '5m'
 
 storage:
-  encryption_key: {{ .Data.data.STORAGE_ENCRYPTION_KEY | toJSON }}
+  encryption_key: {{ mustEnv "STORAGE_ENCRYPTION_KEY" | squote }}
   postgres:
     address: 'tcp://postgres.service.consul:5432'
     database: 'authelia'
     schema: 'public'
     username: 'admin'
-    password: {{ .Data.data.POSTGRES_PASSWORD | toJSON }}
+    password: {{ mustEnv "POSTGRES_PASSWORD" | squote }}
 
 identity_validation:
   reset_password:
-    jwt_secret: {{ .Data.data.JWT_SECRET | toJSON }}
+    jwt_secret: {{ mustEnv "JWT_SECRET" | squote }}
 
 notifier:
   disable_startup_check: false
@@ -83,13 +82,13 @@ notifier:
 
 identity_providers:
   oidc:
-    hmac_secret: {{ .Data.data.OIDC_HMAC_SECRET | toJSON }}
+    hmac_secret: {{ mustEnv "OIDC_HMAC_SECRET" | squote }}
     jwks:
       - key_id: 'main-2026-09-30'
         algorithm: 'RS256'
         use: 'sig'
-        key: {{ .Data.data.OIDC_JWKS_KEY | toJSON }}
-    # Komodo and OpenBao name the user from the ID token alone, which Authelia keeps minimal unless told otherwise.
+        key: {{ mustEnv "OIDC_JWKS_KEY" | b64dec | mindent 10 "|" | msquote }}
+    # Komodo names the user from the ID token alone, which Authelia keeps minimal unless told otherwise.
     claims_policies:
       id_token_profile:
         id_token:
@@ -99,7 +98,7 @@ identity_providers:
     clients:
       - client_id: 'outline'
         client_name: 'Outline'
-        client_secret: {{ .Data.data.OUTLINE_CLIENT_SECRET_DIGEST | toJSON }}
+        client_secret: {{ mustEnv "OUTLINE_CLIENT_SECRET_DIGEST" | squote }}
         public: false
         authorization_policy: 'one_factor'
         consent_mode: 'implicit'
@@ -120,7 +119,7 @@ identity_providers:
         userinfo_signed_response_alg: 'none'
       - client_id: 'kaneo'
         client_name: 'Kaneo'
-        client_secret: {{ .Data.data.KANEO_CLIENT_SECRET_DIGEST | toJSON }}
+        client_secret: {{ mustEnv "KANEO_CLIENT_SECRET_DIGEST" | squote }}
         public: false
         authorization_policy: 'one_factor'
         consent_mode: 'implicit'
@@ -141,7 +140,7 @@ identity_providers:
         userinfo_signed_response_alg: 'none'
       - client_id: 'komodo'
         client_name: 'Komodo'
-        client_secret: {{ .Data.data.KOMODO_CLIENT_SECRET_DIGEST | toJSON }}
+        client_secret: {{ mustEnv "KOMODO_CLIENT_SECRET_DIGEST" | squote }}
         public: false
         authorization_policy: 'one_factor'
         consent_mode: 'implicit'
@@ -162,33 +161,9 @@ identity_providers:
           - 'query'
         token_endpoint_auth_method: 'client_secret_basic'
         userinfo_signed_response_alg: 'none'
-      - client_id: 'openbao'
-        client_name: 'OpenBao'
-        client_secret: {{ .Data.data.OPENBAO_CLIENT_SECRET_DIGEST | toJSON }}
-        public: false
-        authorization_policy: 'one_factor'
-        consent_mode: 'implicit'
-        claims_policy: 'id_token_profile'
-        require_pkce: false
-        # The second URI is the `bao login -method=oidc` listener on the workstation.
-        redirect_uris:
-          - 'https://openbao.ops.home.arpa/ui/vault/auth/oidc/oidc/callback'
-          - 'http://localhost:8250/oidc/callback'
-        scopes:
-          - 'openid'
-          - 'profile'
-          - 'email'
-        grant_types:
-          - 'authorization_code'
-        response_types:
-          - 'code'
-        response_modes:
-          - 'query'
-        token_endpoint_auth_method: 'client_secret_basic'
-        userinfo_signed_response_alg: 'none'
       - client_id: 'windmill'
         client_name: 'Windmill'
-        client_secret: {{ .Data.data.WINDMILL_CLIENT_SECRET_DIGEST | toJSON }}
+        client_secret: {{ mustEnv "WINDMILL_CLIENT_SECRET_DIGEST" | squote }}
         public: false
         authorization_policy: 'one_factor'
         consent_mode: 'implicit'
@@ -208,4 +183,3 @@ identity_providers:
           - 'query'
         token_endpoint_auth_method: 'client_secret_basic'
         userinfo_signed_response_alg: 'none'
-{{ end -}}

@@ -16,10 +16,10 @@ executions = [
   { execution.type = "RunSync", execution.params.sync = "homelab-komodo" },
 ]
 
-# Run after a rebuild, once OpenBao is deployed and unsealed: every stack with secrets needs it.
+# Run after a rebuild: apps need the databases and Authelia up before they start.
 [[procedure]]
 name = "cold-start"
-description = "Deploy every app stack in dependency order. Unseal OpenBao first."
+description = "Deploy every app stack in dependency order."
 tags = ["komodo"]
 
 [[procedure.config.stage]]

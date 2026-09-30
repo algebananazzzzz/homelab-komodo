@@ -18,5 +18,6 @@ jobs:
           shopt -s nullglob
           for file in stacks/*/*/compose.yml; do
             echo "$file"
-            docker compose -f "$file" config --quiet
+            # Secrets reach each stack from Komodo at deploy time, so CI checks structure without them.
+            docker compose -f "$file" config --quiet --no-interpolate
           done

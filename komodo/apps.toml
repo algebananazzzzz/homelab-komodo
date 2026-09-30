@@ -43,15 +43,15 @@ repo = "algebananazzzzz/homelab-komodo"
 branch = "main"
 run_directory = "stacks/apps/kaneo"
 file_paths = ["compose.yml"]
-ignore_services = ["secrets", "register"]
+ignore_services = ["register"]
+# Single quotes keep Compose from expanding a `$` inside a value.
 environment = """
-OPENBAO_ROLE_ID=[[OPENBAO_ROLE_ID]]
-OPENBAO_SECRET_ID=[[OPENBAO_SECRET_ID]]
+POSTGRES_PASSWORD='[[POSTGRES_PASSWORD]]'
+AUTH_SECRET='[[KANEO_AUTH_SECRET]]'
+OIDC_CLIENT_SECRET='[[KANEO_OIDC_CLIENT_SECRET]]'
 """
-# A deploy while OpenBao is sealed would replace containers that then never start, so it stops before Compose runs.
-pre_deploy.command = "curl -sf -o /dev/null --cacert ../../../openbao/openbao.crt https://openbao.service.consul:8200/v1/sys/health"
 # A sync redeploys a stack only when a listed file changes, so every file the stack reads is listed.
-config_files = ["consul/kaneo.json", "../../../openbao/agent.hcl"]
+config_files = ["consul/kaneo.json"]
 
 [[stack]]
 name = "outline"
@@ -65,15 +65,17 @@ repo = "algebananazzzzz/homelab-komodo"
 branch = "main"
 run_directory = "stacks/apps/outline"
 file_paths = ["compose.yml"]
-ignore_services = ["secrets", "register"]
+ignore_services = ["register"]
+# Single quotes keep Compose from expanding a `$` inside a value.
 environment = """
-OPENBAO_ROLE_ID=[[OPENBAO_ROLE_ID]]
-OPENBAO_SECRET_ID=[[OPENBAO_SECRET_ID]]
+POSTGRES_PASSWORD='[[POSTGRES_PASSWORD]]'
+REDIS_PASSWORD='[[REDIS_PASSWORD]]'
+SECRET_KEY='[[OUTLINE_SECRET_KEY]]'
+UTILS_SECRET='[[OUTLINE_UTILS_SECRET]]'
+OIDC_CLIENT_SECRET='[[OUTLINE_OIDC_CLIENT_SECRET]]'
 """
-# A deploy while OpenBao is sealed would replace containers that then never start, so it stops before Compose runs.
-pre_deploy.command = "curl -sf -o /dev/null --cacert ../../../openbao/openbao.crt https://openbao.service.consul:8200/v1/sys/health"
 # A sync redeploys a stack only when a listed file changes, so every file the stack reads is listed.
-config_files = ["consul/outline.json", "../../../openbao/agent.hcl"]
+config_files = ["consul/outline.json"]
 
 [[stack]]
 name = "windmill"
@@ -87,12 +89,10 @@ repo = "algebananazzzzz/homelab-komodo"
 branch = "main"
 run_directory = "stacks/apps/windmill"
 file_paths = ["compose.yml"]
-ignore_services = ["secrets", "register"]
+ignore_services = ["register"]
+# Single quotes keep Compose from expanding a `$` inside a value.
 environment = """
-OPENBAO_ROLE_ID=[[OPENBAO_ROLE_ID]]
-OPENBAO_SECRET_ID=[[OPENBAO_SECRET_ID]]
+POSTGRES_PASSWORD='[[POSTGRES_PASSWORD]]'
 """
-# A deploy while OpenBao is sealed would replace containers that then never start, so it stops before Compose runs.
-pre_deploy.command = "curl -sf -o /dev/null --cacert ../../../openbao/openbao.crt https://openbao.service.consul:8200/v1/sys/health"
 # A sync redeploys a stack only when a listed file changes, so every file the stack reads is listed.
-config_files = ["consul/windmill.json", "../../../openbao/agent.hcl"]
+config_files = ["consul/windmill.json"]

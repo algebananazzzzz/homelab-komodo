@@ -88,11 +88,6 @@ pages:
               - title: Komodo
                 url: https://komodo.ops.home.arpa
                 icon: di:komodo
-              # The health endpoint fails while OpenBao is sealed, which is when deploys stop.
-              - title: OpenBao
-                url: https://openbao.ops.home.arpa/ui/
-                check-url: https://openbao.ops.home.arpa/v1/sys/health
-                icon: di:openbao
               - title: Prometheus
                 url: https://prometheus.ops.home.arpa
                 icon: si:prometheus

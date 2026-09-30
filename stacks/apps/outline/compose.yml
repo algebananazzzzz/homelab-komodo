@@ -1,22 +1,6 @@
 name: outline
 
 services:
-  secrets:
-    image: openbao/openbao:2.7.0
-    command: ["agent", "-config=/openbao/agent.hcl"]
-    # The /secrets volume starts root-owned, so the agent keeps root instead of dropping to the openbao user.
-    user: "0:0"
-    environment:
-      APP: outline
-      BAO_SKIP_DROP_ROOT: "true"
-    secrets:
-      - openbao_role_id
-      - openbao_secret_id
-    volumes:
-      - ../../../openbao/agent.hcl:/openbao/agent.hcl:ro
-      - ../../../openbao/openbao.crt:/openbao/ca.crt:ro
-      - secrets:/secrets
-
   register:
     image: curlimages/curl:8.22.0
     # Consul's API listens on the host. The agent keeps these registrations across restarts and reboots.
@@ -36,20 +20,14 @@ services:
     container_name: outline
     image: outlinewiki/outline:1.10.1
     depends_on:
-      secrets:
-        condition: service_completed_successfully
       register:
         condition: service_completed_successfully
-    # Loads the rendered secrets, refuses to start if one is missing, then runs the image's own entrypoint and command.
-    entrypoint: ["/bin/sh", "-c"]
-    command:
-      - |
-        set -a
-        . /secrets/app.env
-        set +a
-        : "$${DATABASE_URL:?}" "$${REDIS_URL:?}" "$${SECRET_KEY:?}" "$${UTILS_SECRET:?}" "$${OIDC_CLIENT_SECRET:?}"
-        exec docker-entrypoint.sh node build/server/index.js
     environment:
+      DATABASE_URL: postgresql://admin:${POSTGRES_PASSWORD:?}@postgres.service.consul:5432/outline?schema=public
+      REDIS_URL: redis://:${REDIS_PASSWORD:?}@redis.service.consul:6379/3
+      SECRET_KEY: ${SECRET_KEY:?}
+      UTILS_SECRET: ${UTILS_SECRET:?}
+      OIDC_CLIENT_SECRET: ${OIDC_CLIENT_SECRET:?}
       NODE_ENV: production
       URL: https://outline.algebananazzzzz.com
       PORT: 3000
@@ -68,17 +46,9 @@ services:
       - "3001:3000/tcp"
     volumes:
       - outline-data:/var/lib/outline/data
-      - secrets:/secrets:ro
       - /usr/local/share/ca-certificates/homelab-ca.crt:/etc/ssl/certs/homelab-ca.pem:ro
     restart: unless-stopped
-
-secrets:
-  openbao_role_id:
-    environment: OPENBAO_ROLE_ID
-  openbao_secret_id:
-    environment: OPENBAO_SECRET_ID
 
 volumes:
   outline-data:
     name: homelab-outline-data
-  secrets:
