@@ -16,7 +16,7 @@ jobs:
       - name: Validate every Compose file
         run: |
           shopt -s nullglob
-          for file in stacks/*/*/compose.yml openbao/smoke/compose.yml; do
+          for file in stacks/*/*/compose.yml openbao/*/compose.yml; do
             echo "$file"
             docker compose -f "$file" config --quiet
           done
