@@ -43,5 +43,4 @@ executions = [
   { execution.type = "DeployStack", execution.params.stack = "glance", execution.params.services = [] },
   { execution.type = "DeployStack", execution.params.stack = "beaverhabits", execution.params.services = [] },
   { execution.type = "DeployStack", execution.params.stack = "windmill", execution.params.services = [] },
-  { execution.type = "DeployStack", execution.params.stack = "forage", execution.params.services = [] },
 ]

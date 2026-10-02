@@ -1,9 +1,0 @@
-# Merged over Forage's built-in defaults, so only the changes live here.
-server:
-  # Each worker runs its own browser pool, and the VM has 4 GB shared with Hermes.
-  workers: 1
-search:
-  default_lang: en
-browser:
-  min_idle: 0
-  max_instances: 2

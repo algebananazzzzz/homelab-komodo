@@ -183,25 +183,3 @@ identity_providers:
           - 'query'
         token_endpoint_auth_method: 'client_secret_basic'
         userinfo_signed_response_alg: 'none'
-      # Hermes supports only public PKCE clients, so it has no client secret.
-      - client_id: 'hermes'
-        client_name: 'Hermes'
-        public: true
-        authorization_policy: 'one_factor'
-        consent_mode: 'implicit'
-        require_pkce: true
-        pkce_challenge_method: 'S256'
-        redirect_uris:
-          - 'https://hermes.algebananazzzzz.com/auth/callback'
-        scopes:
-          - 'openid'
-          - 'profile'
-          - 'email'
-        grant_types:
-          - 'authorization_code'
-        response_types:
-          - 'code'
-        response_modes:
-          - 'query'
-        token_endpoint_auth_method: 'none'
-        userinfo_signed_response_alg: 'none'
