@@ -72,6 +72,7 @@ A one-shot service in `compose.yml`:
 - `environment` adds `SUPERADMIN_SECRET='[[WINDMILL_SUPERADMIN_SECRET]]'`, `WINDMILL_OIDC_CLIENT_SECRET='[[WINDMILL_OIDC_CLIENT_SECRET]]'`, `WINDMILL_ADMIN_PASSWORD='[[WINDMILL_ADMIN_PASSWORD]]'` and `WINDMILL_GIT_SYNC_TOKEN='[[WINDMILL_GIT_SYNC_TOKEN]]'`, single-quoted as the other stacks are.
 - `ignore_services` adds `bootstrap`.
 - `config_files` adds `bootstrap.sh` and the four `config/` files, so a change to them redeploys the stack.
+- `post_deploy` waits for `bootstrap`, prints its log into the deploy log, and fails the deploy if it exited non-zero. Without it a failed bootstrap would be invisible: nothing depends on it and it is in `ignore_services`.
 
 ## homelab-windmill changes
 
