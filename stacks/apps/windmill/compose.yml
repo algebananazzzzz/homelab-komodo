@@ -2,13 +2,6 @@ name: windmill
 
 x-windmill: &windmill
   image: ghcr.io/windmill-labs/windmill:1.820.0
-  # Trusts the homelab CA, which signs Authelia's and Traefik's certificates, then runs the image's own command.
-  entrypoint: ["/bin/sh", "-c"]
-  command:
-    - |
-      update-ca-certificates
-      exec windmill
-  # Windmill logs every job, and Docker's default driver never rotates them.
   logging:
     driver: json-file
     options:
@@ -19,7 +12,6 @@ x-windmill: &windmill
 services:
   register:
     image: curlimages/curl:8.22.0
-    # Consul's API listens on the host. The agent keeps these registrations across restarts and reboots.
     network_mode: host
     entrypoint: ["/bin/sh", "-c"]
     command:
@@ -45,9 +37,8 @@ services:
       - "8000:8000/tcp"
     volumes:
       - logs:/tmp/windmill/logs
-      - /usr/local/share/ca-certificates/homelab-ca.crt:/usr/local/share/ca-certificates/homelab-ca.crt:ro
+      - /etc/ssl/certs/ca-certificates.crt:/etc/ssl/certs/ca-certificates.crt:ro
 
-  # Runs one job at a time, so a long job holds up the queue behind it.
   worker:
     <<: *windmill
     container_name: windmill-worker
@@ -55,10 +46,9 @@ services:
       MODE: worker
       DATABASE_URL: postgres://admin:${POSTGRES_PASSWORD:?}@postgres.service.consul:5432/windmill?sslmode=disable
       WORKER_GROUP: default
-      # Jobs see only the variables listed in WHITELIST_ENVS, so each runtime's CA setting is listed there.
       REQUESTS_CA_BUNDLE: /etc/ssl/certs/ca-certificates.crt
       SSL_CERT_FILE: /etc/ssl/certs/ca-certificates.crt
-      NODE_EXTRA_CA_CERTS: /usr/local/share/ca-certificates/homelab-ca.crt
+      NODE_EXTRA_CA_CERTS: /etc/ssl/certs/ca-certificates.crt
       DENO_TLS_CA_STORE: system,mozilla
       WHITELIST_ENVS: REQUESTS_CA_BUNDLE,SSL_CERT_FILE,NODE_EXTRA_CA_CERTS,DENO_TLS_CA_STORE
     deploy:
@@ -69,7 +59,7 @@ services:
     volumes:
       - logs:/tmp/windmill/logs
       - cache:/tmp/windmill/cache
-      - /usr/local/share/ca-certificates/homelab-ca.crt:/usr/local/share/ca-certificates/homelab-ca.crt:ro
+      - /etc/ssl/certs/ca-certificates.crt:/etc/ssl/certs/ca-certificates.crt:ro
 
 volumes:
   logs:

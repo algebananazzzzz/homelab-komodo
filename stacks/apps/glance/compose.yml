@@ -7,7 +7,6 @@ x-glance: &glance
       condition: service_completed_successfully
   environment:
     TZ: Asia/Singapore
-    # Glance substitutes these into its config itself.
     KANEO_HOSTNAME: kaneo.algebananazzzzz.com
     OUTLINE_HOSTNAME: outline.algebananazzzzz.com
     WINDMILL_HOSTNAME: windmill.algebananazzzzz.com
@@ -20,7 +19,6 @@ x-glance: &glance
 services:
   register:
     image: curlimages/curl:8.22.0
-    # Consul's API listens on the host. The agent keeps these registrations across restarts and reboots.
     network_mode: host
     entrypoint: ["/bin/sh", "-c"]
     command:
@@ -42,7 +40,6 @@ services:
   glance-public:
     <<: *glance
     container_name: glance-public
-    # The image's entrypoint pins the config path, so this is the only way to pick another file.
     entrypoint: ["/app/glance", "--config", "/app/config/public.yml"]
     ports:
       - "8091:8080/tcp"

@@ -3,7 +3,6 @@ name: postgres
 services:
   register:
     image: curlimages/curl:8.22.0
-    # Consul's API listens on the host. The agent keeps these registrations across restarts and reboots.
     network_mode: host
     entrypoint: ["/bin/sh", "-c"]
     command:
@@ -24,7 +23,6 @@ services:
         condition: service_completed_successfully
     environment:
       POSTGRES_USER: admin
-      # Only an empty data volume takes this; an existing cluster keeps its password until ALTER ROLE changes it.
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?}
     ports:
       - "5432:5432/tcp"

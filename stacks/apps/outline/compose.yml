@@ -3,7 +3,6 @@ name: outline
 services:
   register:
     image: curlimages/curl:8.22.0
-    # Consul's API listens on the host. The agent keeps these registrations across restarts and reboots.
     network_mode: host
     entrypoint: ["/bin/sh", "-c"]
     command:
@@ -41,12 +40,12 @@ services:
       OIDC_USERINFO_URI: https://auth.algebananazzzzz.com/api/oidc/userinfo
       OIDC_DISPLAY_NAME: HomeLab SSO
       OIDC_SCOPES: openid profile email
-      NODE_EXTRA_CA_CERTS: /etc/ssl/certs/homelab-ca.pem
+      NODE_EXTRA_CA_CERTS: /etc/ssl/certs/ca-certificates.crt
     ports:
       - "3001:3000/tcp"
     volumes:
       - outline-data:/var/lib/outline/data
-      - /usr/local/share/ca-certificates/homelab-ca.crt:/etc/ssl/certs/homelab-ca.pem:ro
+      - /etc/ssl/certs/ca-certificates.crt:/etc/ssl/certs/ca-certificates.crt:ro
     restart: unless-stopped
 
 volumes:

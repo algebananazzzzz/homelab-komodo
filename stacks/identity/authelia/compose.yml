@@ -3,7 +3,6 @@ name: authelia
 services:
   register:
     image: curlimages/curl:8.22.0
-    # Consul's API listens on the host. The agent keeps these registrations across restarts and reboots.
     network_mode: host
     entrypoint: ["/bin/sh", "-c"]
     command:
@@ -22,8 +21,6 @@ services:
     depends_on:
       register:
         condition: service_completed_successfully
-    # The template filter only reads configuration.yml, so the users file is written here from the environment
-    # before the image's own entrypoint starts Authelia.
     entrypoint: ["/bin/sh", "-c"]
     command:
       - |
@@ -46,7 +43,6 @@ services:
       STORAGE_ENCRYPTION_KEY: ${STORAGE_ENCRYPTION_KEY:?}
       JWT_SECRET: ${JWT_SECRET:?}
       OIDC_HMAC_SECRET: ${OIDC_HMAC_SECRET:?}
-      # Base64 of the PEM key, since a Komodo variable holds one line.
       OIDC_JWKS_KEY: ${OIDC_JWKS_KEY:?}
       USER_PASSWORD_DIGEST: ${USER_PASSWORD_DIGEST:?}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?}
