@@ -11,10 +11,10 @@ Out of scope: job history, run logs and the audit log. A future dump routine wil
 | Layer | Source of truth | Applied by |
 |---|---|---|
 | Instance settings and worker groups | `homelab-komodo` `stacks/apps/windmill/config/windmill-config.yaml` | `config_sync` service (`windmill sync-config`) on every Komodo deploy |
-| Workspace existence | `homelab-windmill` CI (`wmill workspace add --create`) | CI on every push to main; a no-op unless the workspace is gone |
-| Workspace settings, including the git sync config | `homelab-windmill` `settings.yaml` (`includeSettings: true`) | CI's `wmill sync push`; git sync commits changes made in Windmill |
-| Workspace content | `homelab-windmill` `f/**` | CI's `wmill sync push`; git sync commits changes made in Windmill |
-| Git sync URL secret | GitHub secret `WINDMILL_GIT_SYNC_TOKEN` on `homelab-windmill` | CI's `wmill variable add` after the push |
+| Workspace existence | `homelab-windmill` `workspace.yml` (`wmill workspace add --create`) | `workspace.yml`, a no-op unless the workspace is gone |
+| Workspace settings, including the git sync config, and git sync's folder and resource | `homelab-windmill` `settings.yaml` and `f/git_sync/**` | `workspace.yml` (`wmill sync push --include-settings --includes "f/git_sync/**"`), run only when those files change or by hand; git sync commits changes made in Windmill |
+| Workspace content | `homelab-windmill` `f/**` except `f/git_sync/**` | `sync.yml` (`wmill sync push --excludes "f/git_sync/**"`); git sync commits changes made in Windmill |
+| Git sync URL secret | GitHub secret `WINDMILL_GIT_SYNC_TOKEN` on `homelab-windmill` | `workspace.yml`'s `wmill variable add` after its push |
 | Other workspace secret values | Not stored | Re-entered by hand, listed by `check-vars.sh` |
 | API tokens (GitHub CI, MCP clients) | Not stored | Re-issued by hand after a rebuild |
 | Superadmin flag on your account | Not stored | Set by hand after a rebuild |
@@ -31,17 +31,17 @@ With `require_preexisting_user_for_oauth: false`, the first Authelia login creat
 
 ## homelab-windmill
 
-- `wmill.yaml` sets `includeSettings: true`, so `settings.yaml` (pulled with `wmill sync pull --include-settings`) carries the workspace settings and the git sync repository entry. Git sync's object types include `settings`, so a settings change made in the UI is committed too.
-- `f/git_sync/homelab_windmill.resource.yaml` is the `git_repository` resource git sync pushes through. Its `url` is `$var:f/git_sync/repo_url`, a secret variable holding `https://x-access-token:<PAT>@github.com/algebananazzzzz/homelab-windmill.git`, with a fine-grained PAT limited to this repo's contents.
-- `sync.yml` creates the workspace if missing, runs `wmill sync push`, then writes `f/git_sync/repo_url` with `wmill variable add` from the `WINDMILL_GIT_SYNC_TOKEN` GitHub secret. It skips commits whose message starts with `[WM]`, which git sync writes after the change is already live.
-- `drift.yml` runs nightly: `wmill sync pull --dry-run` must show no difference (a difference means git sync failed), and `scripts/check-vars.sh` lists every `$var:` reference with no variable.
+- `workspace.yml` owns the workspace config. It runs on changes to `settings.yaml`, `f/git_sync/**` or itself, or by hand: it creates the workspace if missing, pushes `settings.yaml` (git sync's repository entry and object types) with the `f/git_sync` folder and `git_repository` resource, then writes `f/git_sync/repo_url` (`https://x-access-token:<PAT>@github.com/algebananazzzzz/homelab-windmill.git`) from the `WINDMILL_GIT_SYNC_TOKEN` secret.
+- `sync.yml` owns content. It ignores those paths, pushes everything else with `f/git_sync/**` excluded and settings off (`includeSettings: false` in `wmill.yaml`), and can be run by hand.
+- Both skip commits whose message starts with `[WM]`, which git sync writes after the change is already live.
+- `drift.yml` runs nightly: `wmill sync pull --dry-run --include-settings` must show no difference (a difference means git sync failed), and `scripts/check-vars.sh` lists every `$var:` reference with no variable.
 
 ## Recovery runbook (empty `windmill` database)
 
 1. Deploy the Windmill stack in Komodo, or run `cold-start`. `config_sync` restores the instance settings and worker groups.
 2. Sign in through Authelia, which creates your account. If you want superadmin, set it yourself.
 3. Mint an API token and update `WMILL_TOKEN` in the `homelab-windmill` GitHub secrets.
-4. Re-run the latest `sync` workflow on main. It creates the `homelab` workspace with you as admin, pushes the settings, git sync config and content, and writes the git sync URL.
+4. Run the `workspace` workflow by hand: it creates the `homelab` workspace with you as admin, pushes the settings and git sync config, and writes the git sync URL. Then run the `sync` workflow by hand to push the content.
 5. Run the `drift` workflow and re-enter each secret it lists.
 6. Mint new tokens for any MCP client that talks to Windmill.
 
