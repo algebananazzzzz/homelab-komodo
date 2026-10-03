@@ -1,0 +1,23 @@
+{
+  "base_url": "https://windmill.algebananazzzzz.com",
+  "disable_password_login": true,
+  "require_preexisting_user_for_oauth": true,
+  "oauths": {
+    "authelia": {
+      "id": "windmill",
+      "secret": "env:WINDMILL_OIDC_CLIENT_SECRET",
+      "display_name": "Authelia",
+      "login_config": {
+        "scopes": ["openid", "profile", "email", "groups"],
+        "auth_url": "https://auth.algebananazzzzz.com/api/oidc/authorization",
+        "token_url": "https://auth.algebananazzzzz.com/api/oidc/token",
+        "userinfo_url": "https://auth.algebananazzzzz.com/api/oidc/userinfo"
+      },
+      "connect_config": {
+        "scopes": ["openid", "profile", "email", "groups"],
+        "auth_url": "https://auth.algebananazzzzz.com/api/oidc/authorization",
+        "token_url": "https://auth.algebananazzzzz.com/api/oidc/token"
+      }
+    }
+  }
+}

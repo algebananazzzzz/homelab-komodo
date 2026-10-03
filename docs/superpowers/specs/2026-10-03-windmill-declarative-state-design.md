@@ -43,8 +43,8 @@ Reused: `WINDMILL_OIDC_CLIENT_SECRET` and `WINDMILL_ADMIN_PASSWORD`.
 ### `stacks/apps/windmill/config/`
 
 - `settings.json`: the managed global settings, keyed by name: `base_url`, `oauths`, `disable_password_login`, `require_preexisting_user_for_oauth`, copied from the live instance. A string of the form `env:NAME` is replaced with that environment variable at run time, which is how the OIDC client secret gets in. Every other global setting (`jwt_secret`, `uid`, `custom_tags`, ...) is left to Windmill.
-- `users.json`: users to create if missing, in the `POST /api/users/create` body format. Today that is `daniel.zhouqx@gmail.com`, superadmin, login type `authelia`.
-- `workspace.json`: the workspace id, display name, and the owner's email and username.
+- `users.json`: users to create if missing, in the `POST /api/users/create` body format. Today that is `daniel.zhouqx@gmail.com`, superadmin, login type `pending_oauth`: the first Authelia login adopts the account. Creating it with login type `authelia` fails on a fresh database, because Windmill loads a newly set OAuth client a few seconds later.
+- `workspace.json`: the workspace id, display name and owner email. Windmill derives the owner's username (`danielzhouqx`) because `automate_username_creation` is on, and rejects an explicit one.
 - `git_sync.json`: the workspace's git sync settings in the `edit_git_sync_config` body format: one repository, resource `f/git_sync/homelab_windmill`, include path `f/**`, and the same object types `homelab-windmill/wmill.yaml` syncs (script, flow, app, folder, resource, variable, schedule, trigger). Secrets are excluded.
 
 ### `bootstrap` service and `bootstrap.sh`

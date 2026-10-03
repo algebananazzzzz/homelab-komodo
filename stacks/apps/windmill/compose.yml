@@ -33,6 +33,12 @@ services:
     environment:
       MODE: server
       DATABASE_URL: postgres://admin:${POSTGRES_PASSWORD:?}@postgres.service.consul:5432/windmill?sslmode=disable
+      SUPERADMIN_SECRET: ${SUPERADMIN_SECRET:?}
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "-o", "/dev/null", "http://127.0.0.1:8000/api/version"]
+      interval: 5s
+      timeout: 3s
+      retries: 60
     ports:
       - "8000:8000/tcp"
     volumes:
@@ -60,6 +66,22 @@ services:
       - logs:/tmp/windmill/logs
       - cache:/tmp/windmill/cache
       - /etc/ssl/certs/ca-certificates.crt:/etc/ssl/certs/ca-certificates.crt:ro
+
+  bootstrap:
+    image: node:22.23.3-alpine
+    depends_on:
+      server:
+        condition: service_healthy
+    entrypoint: ["/bin/sh", "-c", "apk add --no-cache --quiet curl jq git && exec /bootstrap.sh"]
+    environment:
+      WM_URL: http://server:8000
+      SUPERADMIN_SECRET: ${SUPERADMIN_SECRET:?}
+      WINDMILL_OIDC_CLIENT_SECRET: ${WINDMILL_OIDC_CLIENT_SECRET:?}
+      WINDMILL_ADMIN_PASSWORD: ${WINDMILL_ADMIN_PASSWORD:?}
+      WINDMILL_GIT_SYNC_TOKEN: ${WINDMILL_GIT_SYNC_TOKEN:?}
+    volumes:
+      - ./bootstrap.sh:/bootstrap.sh:ro
+      - ./config:/config:ro
 
 volumes:
   logs:
