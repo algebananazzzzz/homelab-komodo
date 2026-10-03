@@ -9,7 +9,7 @@ Out of scope: job history, run logs and the audit log. A future dump routine wil
 ## Current state
 
 - `homelab-komodo` deploys the Windmill containers (`stacks/apps/windmill/compose.yml`, `komodo/apps.toml`).
-- Instance configuration was set by hand through the API: Authelia OAuth, `disable_password_login`, `require_preexisting_user_for_oauth`, the superadmin user `daniel.zhouqx@gmail.com`, and the `homelab` workspace. None of it is declared.
+- Instance configuration was set by hand through the API: Authelia OAuth, `disable_password_login`, `require_preexisting_user_for_oauth`, the superadmin user `daniel.zhouqx@gmail.com` (login type `authelia`), and the `homelab` workspace. None of it is declared.
 - `homelab-windmill` holds the `homelab` workspace content under `f/**`. CI runs `wmill sync push` on every push to main. A nightly drift job fails when Windmill differs from main, after which the next deploy overwrites the UI change.
 - Secret variables (`skipSecrets: true`) exist only in Windmill's database.
 
@@ -17,79 +17,87 @@ Out of scope: job history, run logs and the audit log. A future dump routine wil
 
 | Layer | Source of truth | Applied by |
 |---|---|---|
-| Instance: global settings, users, instance groups, worker configs | `homelab-komodo` `stacks/apps/windmill/config/` | `bootstrap` service on every Komodo deploy |
-| Workspace existence and the git sync token | `homelab-komodo` bootstrap and Komodo variables | `bootstrap` service |
-| Workspace content, git sync settings, git sync resource | `homelab-windmill` main | `bootstrap` seeds a newly created workspace; after that, CI for pushes to the repo and Windmill git sync for changes made in Windmill |
+| Instance: the declared global settings and users | `homelab-komodo` `stacks/apps/windmill/config/` | `bootstrap` service on every Komodo deploy |
+| Workspace existence, git sync repository entry, git sync URL variable | `homelab-komodo` `config/` and Komodo variables | `bootstrap` service |
+| Workspace content, including the git sync folder and resource | `homelab-windmill` main | `bootstrap` seeds a newly created workspace; after that, CI for pushes to the repo and Windmill git sync for changes made in Windmill |
 | Workspace secret values | Not stored | Re-entered by hand, listed by the `$var:` check |
 | API tokens (GitHub CI, MCP clients) | Not stored | Re-issued by hand after a rebuild |
 
 Workspace secrets are not mirrored anywhere. Most are keys issued by other homelab apps whose state lives in the same Postgres cluster, so the outages that lose Windmill's database usually invalidate them anyway. External keys are few and cheap to re-enter.
 
-## New Komodo variables
+## Why the bootstrap calls the API instead of `wmill instance push`
+
+`wmill instance push` (CLI 1.820.0) treats the local files as the whole instance. It sets every global setting missing from `instance_settings.yaml` to null, which would wipe generated values such as `jwt_secret` and `uid` unless they were committed, and it replaces the full user list. It also logs a failed setting and carries on instead of failing. The bootstrap therefore manages only the keys it declares, through the REST API with `curl` and `jq`, and stops on the first error.
+
+## Komodo variables
+
+New:
 
 - `WINDMILL_SUPERADMIN_SECRET`: 64 random hex characters, passed to Windmill's `SUPERADMIN_SECRET` env var (present in v1.820.0). It acts as a superadmin bearer token that lives outside the database, so the bootstrap can authenticate against an empty database. It goes to the `server` and `bootstrap` containers only, never to `worker`, so scripts cannot read it.
 - `WINDMILL_GIT_SYNC_TOKEN`: a fine-grained GitHub PAT with contents read and write on `algebananazzzzz/homelab-windmill` only, no expiry.
 
-`WINDMILL_OIDC_CLIENT_SECRET` already exists and is reused.
+Reused: `WINDMILL_OIDC_CLIENT_SECRET` and `WINDMILL_ADMIN_PASSWORD`.
 
 ## homelab-komodo changes
 
 ### `stacks/apps/windmill/config/`
 
-The instance files in the format `wmill instance pull` writes: `instance_settings.yaml`, `instance_users.yaml`, `instance_groups.yaml`, `instance_configs.yaml`. They are captured once from the live instance, then secrets are replaced with environment placeholders (`${WINDMILL_OIDC_CLIENT_SECRET}`). Volatile or instance-generated values (license keys, generated IDs, timestamps) are removed if the CLI tolerates their absence.
+- `settings.json`: the managed global settings, keyed by name: `base_url`, `oauths`, `disable_password_login`, `require_preexisting_user_for_oauth`, copied from the live instance. A string of the form `env:NAME` is replaced with that environment variable at run time, which is how the OIDC client secret gets in. Every other global setting (`jwt_secret`, `uid`, `custom_tags`, ...) is left to Windmill.
+- `users.json`: users to create if missing, in the `POST /api/users/create` body format. Today that is `daniel.zhouqx@gmail.com`, superadmin, login type `authelia`.
+- `workspace.json`: the workspace id, display name, and the owner's email and username.
+- `git_sync.json`: the workspace's git sync settings in the `edit_git_sync_config` body format: one repository, resource `f/git_sync/homelab_windmill`, include path `f/**`, and the same object types `homelab-windmill/wmill.yaml` syncs (script, flow, app, folder, resource, variable, schedule, trigger). Secrets are excluded.
 
-### `bootstrap` service
+### `bootstrap` service and `bootstrap.sh`
 
-A one-shot service in `compose.yml`, built the same way as `register`:
+A one-shot service in `compose.yml`:
 
-- Image `node:22-alpine` with `windmill-cli` pinned to the server image version.
+- Image `node:22.23.3-alpine`, installing `curl`, `jq` and `git` at start.
 - `depends_on: server: condition: service_healthy`. The `server` service gains a healthcheck against `/api/version`.
-- Environment: `WM_URL=http://server:8000`, `WM_TOKEN` from `WINDMILL_SUPERADMIN_SECRET`, `WINDMILL_OIDC_CLIENT_SECRET`, `WINDMILL_GIT_SYNC_TOKEN`.
+- Environment: `WM_URL=http://server:8000`, `SUPERADMIN_SECRET`, `WINDMILL_OIDC_CLIENT_SECRET`, `WINDMILL_ADMIN_PASSWORD`, `WINDMILL_GIT_SYNC_TOKEN`.
 - Mounts `bootstrap.sh` and `config/` read-only.
-- Listed in `ignore_services` in `komodo/apps.toml`, like `register`, so a completed one-shot does not show the stack as unhealthy.
+- Listed in `ignore_services` in `komodo/apps.toml`, like `register`.
 
-`bootstrap.sh` runs on every deploy, each step idempotent, and exits non-zero on any failure:
+`bootstrap.sh` runs on every deploy, stops on the first failed call, and never prints a secret:
 
-1. Render `config/` into a temp directory with the secrets substituted, then run `wmill instance push --yes` from it.
-2. Create the `homelab` workspace if it does not exist, and remember whether it did.
-3. Create or update the secret variable that the git sync resource references (path decided during implementation, for example `f/git_sync/token`) from `WINDMILL_GIT_SYNC_TOKEN`.
-4. Only if step 2 created the workspace: clone `homelab-windmill` main (public, no credential needed), `npm ci` in it so the repo's own pinned CLI is used, then run `wmill sync push --yes` and `wmill gitsync-settings push --yes` against the new workspace. On an existing workspace CI owns content, so this step is skipped.
-
-The image therefore needs `git` alongside Node.
+1. For each key in `settings.json`, read the live value and write it only if it differs.
+2. Create each user in `users.json` that does not exist. Set `admin@windmill.dev`'s password to `WINDMILL_ADMIN_PASSWORD`, because a fresh database creates it with the default password `changeme`.
+3. Mint a 15-minute token impersonating the workspace owner. Content and the git sync variable are then owned by the owner, as they are today, rather than by the superadmin-secret identity, which Windmill refuses as a schedule's `on_behalf_of`.
+4. Create the `homelab` workspace if it does not exist, with the owner as its admin.
+5. Only if step 4 created the workspace: clone `homelab-windmill` main (public, no credential), `npm ci` so the repo's pinned CLI is used, and `wmill sync push` into the new workspace. Git sync is configured after this step, so seeding does not trigger commits.
+6. Write the secret variable `f/git_sync/repo_url` as `https://x-access-token:<PAT>@github.com/algebananazzzzz/homelab-windmill.git`, only if its value differs. A `$var:` reference must be a whole field value, so the variable holds the full URL. The `f/git_sync` folder comes from the content, so on an existing workspace the content must already be deployed.
+7. Apply `git_sync.json` with `edit_git_sync_config`.
 
 ### Komodo stack config
 
-- `environment` adds `WINDMILL_SUPERADMIN_SECRET='[[WINDMILL_SUPERADMIN_SECRET]]'`, `WINDMILL_OIDC_CLIENT_SECRET='[[WINDMILL_OIDC_CLIENT_SECRET]]'` and `WINDMILL_GIT_SYNC_TOKEN='[[WINDMILL_GIT_SYNC_TOKEN]]'`, single-quoted as the other stacks are.
-- `config_files` adds `bootstrap.sh` and every file in `config/`, so a change to them redeploys the stack.
-
-### Renovate
-
-A package rule groups the Windmill server image and the bootstrap's `windmill-cli` version so they move in one PR. `homelab-windmill`'s `package.json` CLI version is still bumped by hand, and its existing CI check fails if it skews from the server.
+- `environment` adds `SUPERADMIN_SECRET='[[WINDMILL_SUPERADMIN_SECRET]]'`, `WINDMILL_OIDC_CLIENT_SECRET='[[WINDMILL_OIDC_CLIENT_SECRET]]'`, `WINDMILL_ADMIN_PASSWORD='[[WINDMILL_ADMIN_PASSWORD]]'` and `WINDMILL_GIT_SYNC_TOKEN='[[WINDMILL_GIT_SYNC_TOKEN]]'`, single-quoted as the other stacks are.
+- `ignore_services` adds `bootstrap`.
+- `config_files` adds `bootstrap.sh` and the four `config/` files, so a change to them redeploys the stack.
 
 ## homelab-windmill changes
 
-### Git sync
+### Git sync content
 
-- `wmill.yaml` gains git sync settings: sync mode, repository `homelab-windmill`, branch `main`, and the same object types the repo already syncs (scripts, flows, apps, folders, resources, non-secret variables, schedules, triggers). Secrets are excluded.
-- A `git_repository` resource under `f/` whose token is a `$var:` reference to the variable the bootstrap writes. It passes the existing plain-text credential check.
+- `f/git_sync/folder.meta.yaml` and `f/git_sync/homelab_windmill.resource.yaml`, a `git_repository` resource whose `url` is `$var:f/git_sync/repo_url` and whose branch is `main`. It passes the existing plain-text credential check.
 - Windmill commits each deploy made in Windmill to main with a `[WM]` prefix. Git sync is available on Community Edition for workspaces with up to 2 users; `homelab` has one.
+- `wmill.yaml` keeps governing what the CLI syncs. `config/git_sync.json` in `homelab-komodo` governs what git sync commits. If they disagree, the nightly drift comparison shows it.
 
 ### `sync.yml`
 
-- The `deploy` job is skipped when the head commit message starts with `[WM]`, because that content is already live.
-- After `wmill sync push`, the job runs `wmill gitsync-settings push --yes`.
+The `deploy` job is skipped when the head commit message starts with `[WM]`, because that content is already live.
 
 ### `drift.yml`
 
 - Keeps the `wmill sync pull --dry-run` comparison. A difference now means git sync failed, and the error message says so.
-- Adds a `$var:` check: every `$var:<path>` reference in the repo must exist as a variable in the workspace. Missing ones are listed and fail the job. After a rebuild, this list is the set of secrets to re-enter.
+- Adds `scripts/check-vars.sh`: every `$var:<path>` reference under `f/` must exist as a variable in the workspace. Missing ones are listed and fail the job. After a rebuild, this list is the set of secrets to re-enter.
 
 ## Recovery runbook (empty `windmill` database)
 
-1. Deploy the Windmill stack in Komodo, or run the `cold-start` procedure. The bootstrap restores instance settings, users and login, creates the `homelab` workspace, writes the git sync token, and seeds the workspace content and git sync settings from `homelab-windmill` main.
+1. Deploy the Windmill stack in Komodo, or run the `cold-start` procedure. The bootstrap restores the managed settings and users, creates the `homelab` workspace, seeds the content from `homelab-windmill` main, and configures git sync.
 2. Sign in through Authelia, mint an API token and update `WMILL_TOKEN` in the `homelab-windmill` GitHub secrets.
 3. Run the `drift` workflow. Re-enter each secret it lists in the Windmill UI, then run it again until it passes.
 4. Mint new tokens for any MCP client that talks to Windmill.
+
+Break-glass if Authelia is down: with `SUPERADMIN_SECRET`, `POST /api/settings/global/disable_password_login` with `{"value": null}` re-enables password login for `admin@windmill.dev`. The next deploy turns it off again.
 
 ## Security notes
 
@@ -99,13 +107,12 @@ A package rule groups the Windmill server image and the bootstrap's `windmill-cl
 
 ## Risks verified during implementation
 
-- **Echo commits.** A CI deploy may trigger git sync to commit the same content back. If Windmill re-serializes files so they differ, the result is noise commits. Verify on the test instance; if they occur, decide between excluding CI deploys from git sync and normalizing the repo to Windmill's serialization.
-- **What `wmill instance push` deletes.** It overwrites the remote. Confirm on the test instance whether it removes users, groups or settings absent from `config/` (for example `admin@windmill.dev`) before it runs against the live instance.
+- **Echo commits.** A CI deploy may trigger git sync to commit the same content back. If Windmill re-serializes files so they differ, the result is noise commits. Check on the live rollout; if they occur, decide between excluding CI deploys from git sync and normalizing the repo to Windmill's serialization.
 - **Silent git sync failure.** If a git sync commit fails, the next CI push deletes the unsynced item. Deleted items stay recoverable with `wmill trash` for three days, and the nightly drift job reports the gap.
 - **Push races.** A `[WM]` commit landing while a PR is open is an ordinary concurrent change on main. A direct push to main that is behind is rejected by GitHub as non-fast-forward.
 
 ## Testing
 
-1. A throwaway local stack: its own empty Postgres container, the pinned Windmill image, and the real `bootstrap` service and `config/`, with a test OIDC secret and a scratch git sync token. Check that password login is disabled, the OAuth provider is configured, the superadmin user exists, the `homelab` workspace exists, the git sync variable is set, `f/kaneo` and its schedule were seeded, and the git sync settings match `wmill.yaml`.
-2. Run the bootstrap a second time and confirm it changes nothing and does not re-seed. Run the `$var:` check against the local instance and confirm it reports `f/kaneo/api_key` as missing.
-3. Only after both pass, deploy to the live instance, enable git sync, and make a UI edit to confirm a `[WM]` commit reaches main and CI skips it.
+1. A throwaway stack on svc-apps-02 with its own empty Postgres container, the pinned Windmill image, and the real `bootstrap` service and `config/`, using dummy secrets. Check that the managed settings match `settings.json`, the users exist, the `homelab` workspace exists with the owner as admin, `f/kaneo` and its schedule were seeded, the git sync variable is set, and the git sync settings match `git_sync.json`.
+2. Run the bootstrap a second time and confirm it writes no settings and does not re-seed. Run `check-vars.sh` against the throwaway instance and confirm it reports `f/kaneo/api_key` as missing.
+3. Only after both pass, deploy to the live instance, make a UI edit, and confirm a `[WM]` commit reaches main and CI skips it.
