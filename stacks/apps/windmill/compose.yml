@@ -24,6 +24,20 @@ services:
     volumes:
       - ./consul:/consul:ro
 
+  # Windmill's own declarative instance config. It needs the tables the server creates on first start, and the worker waits for it.
+  config_sync:
+    <<: *windmill
+    restart: "no"
+    depends_on:
+      server:
+        condition: service_healthy
+    command: ["windmill", "sync-config", "/config/windmill-config.yaml"]
+    environment:
+      DATABASE_URL: postgres://admin:${POSTGRES_PASSWORD:?}@postgres.service.consul:5432/windmill?sslmode=disable
+      WINDMILL_OIDC_CLIENT_SECRET: ${WINDMILL_OIDC_CLIENT_SECRET:?}
+    volumes:
+      - ./config/windmill-config.yaml:/config/windmill-config.yaml:ro
+
   server:
     <<: *windmill
     container_name: windmill
@@ -33,7 +47,8 @@ services:
     environment:
       MODE: server
       DATABASE_URL: postgres://admin:${POSTGRES_PASSWORD:?}@postgres.service.consul:5432/windmill?sslmode=disable
-      SUPERADMIN_SECRET: ${SUPERADMIN_SECRET:?}
+      # Accounts made by the first Authelia login are not superadmins, and homelab-windmill's CI creates the workspace with one.
+      CREATE_WORKSPACE_REQUIRE_SUPERADMIN: "false"
     healthcheck:
       test: ["CMD", "curl", "-fsS", "-o", "/dev/null", "http://127.0.0.1:8000/api/version"]
       interval: 5s
@@ -48,6 +63,9 @@ services:
   worker:
     <<: *windmill
     container_name: windmill-worker
+    depends_on:
+      config_sync:
+        condition: service_completed_successfully
     environment:
       MODE: worker
       DATABASE_URL: postgres://admin:${POSTGRES_PASSWORD:?}@postgres.service.consul:5432/windmill?sslmode=disable
@@ -66,20 +84,6 @@ services:
       - logs:/tmp/windmill/logs
       - cache:/tmp/windmill/cache
       - /etc/ssl/certs/ca-certificates.crt:/etc/ssl/certs/ca-certificates.crt:ro
-
-  bootstrap:
-    image: alpine:3.22.6
-    depends_on:
-      server:
-        condition: service_healthy
-    entrypoint: ["/bin/sh", "-c", "apk add --no-cache --quiet curl jq && exec /bootstrap.sh"]
-    environment:
-      WM_URL: http://server:8000
-      SUPERADMIN_SECRET: ${SUPERADMIN_SECRET:?}
-      WINDMILL_OIDC_CLIENT_SECRET: ${WINDMILL_OIDC_CLIENT_SECRET:?}
-    volumes:
-      - ./bootstrap.sh:/bootstrap.sh:ro
-      - ./config:/config:ro
 
 volumes:
   logs:

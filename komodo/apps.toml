@@ -89,14 +89,11 @@ repo = "algebananazzzzz/homelab-komodo"
 branch = "main"
 run_directory = "stacks/apps/windmill"
 file_paths = ["compose.yml"]
-ignore_services = ["register", "bootstrap"]
+ignore_services = ["register", "config_sync"]
 # Single quotes keep Compose from expanding a `$` inside a value.
 environment = """
 POSTGRES_PASSWORD='[[POSTGRES_PASSWORD]]'
-SUPERADMIN_SECRET='[[WINDMILL_SUPERADMIN_SECRET]]'
 WINDMILL_OIDC_CLIENT_SECRET='[[WINDMILL_OIDC_CLIENT_SECRET]]'
 """
 # A sync redeploys a stack only when a listed file changes, so every file the stack reads is listed.
-config_files = ["consul/windmill.json", "bootstrap.sh", "config/settings.json", "config/users.json"]
-# Nothing depends on the one-shot bootstrap, so wait for it here: its log lands in the deploy log and its failure fails the deploy.
-post_deploy.command = 'docker compose wait bootstrap >/dev/null 2>&1; docker compose logs --no-log-prefix bootstrap; test "$(docker compose ps -a --format {{.ExitCode}} bootstrap)" = 0'
+config_files = ["consul/windmill.json", "config/windmill-config.yaml"]
