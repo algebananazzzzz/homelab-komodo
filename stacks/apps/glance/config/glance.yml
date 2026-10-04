@@ -57,17 +57,33 @@ pages:
             cache: 30s
             sites:
               - title: Jellyfin
-                url: http://100.116.110.63:8096/web
-                check-url: http://192.168.50.39:8096/web
+                url: https://jellyfin.media.home.arpa/web/
+                check-url: http://10.10.10.1:8096/web/
                 icon: si:jellyfin
+              - title: Jellyseerr
+                url: https://jellyseerr.media.home.arpa/login
+                check-url: http://10.10.10.1:5055/login
+                icon: di:jellyseerr
               - title: Radarr
-                url: http://100.116.110.63:7878/radarr/
-                check-url: http://192.168.50.39:7878/radarr/
+                url: https://radarr.media.home.arpa/radarr/
+                check-url: http://10.10.10.1:7878/radarr/
                 icon: si:radarr
               - title: Sonarr
-                url: http://100.116.110.63:8989/sonarr/
-                check-url: http://192.168.50.39:8989/sonarr/
+                url: https://sonarr.media.home.arpa/sonarr/
+                check-url: http://10.10.10.1:8989/sonarr/
                 icon: si:sonarr
+              - title: Lidarr
+                url: https://lidarr.media.home.arpa/lidarr/
+                check-url: http://10.10.10.1:8686/lidarr/
+                icon: di:lidarr
+              - title: Bazarr
+                url: https://bazarr.media.home.arpa/bazarr
+                check-url: http://10.10.10.1:6767/bazarr
+                icon: di:bazarr
+              - title: Prowlarr
+                url: https://prowlarr.media.home.arpa/prowlarr/
+                check-url: http://10.10.10.1:9696/prowlarr/
+                icon: di:prowlarr
 
           - type: monitor
             title: Management
@@ -92,9 +108,8 @@ pages:
                 url: https://prometheus.ops.home.arpa
                 icon: si:prometheus
               - title: UGOS
-                url: https://100.116.110.63:9443/
+                url: https://ugos.ops.home.arpa/
                 icon: si:ubiquiti
-                allow-insecure: true
 
           - $include: shared/nodes.yml
 
