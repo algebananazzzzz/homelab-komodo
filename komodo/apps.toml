@@ -84,7 +84,7 @@ tags = ["apps"]
 deploy = true
 
 [stack.config]
-server = "svc-apps-02"
+server = "svc-apps-01"
 repo = "algebananazzzzz/homelab-komodo"
 branch = "main"
 run_directory = "stacks/apps/windmill"
