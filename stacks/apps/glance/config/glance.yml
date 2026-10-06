@@ -113,4 +113,6 @@ pages:
 
           - $include: shared/nodes.yml
 
+  - $include: shared/buses.yml
+
   - $include: shared/monitoring.yml
