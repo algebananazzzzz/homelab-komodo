@@ -62,3 +62,5 @@ pages:
                     url: https://home.arpa
                     description: Connect to Tailscale first
                     icon: si:tailscale
+
+  - $include: shared/buses.yml
