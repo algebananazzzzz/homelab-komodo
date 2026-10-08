@@ -25,6 +25,7 @@ services:
       DATABASE_URL: postgresql://admin:${POSTGRES_PASSWORD:?}@postgres.service.consul:5432/kaneo
       AUTH_SECRET: ${AUTH_SECRET:?}
       CUSTOM_OAUTH_CLIENT_SECRET: ${OIDC_CLIENT_SECRET:?}
+      NOTIFICATION_SECRET_ENCRYPTION_KEY: ${NOTIFICATION_SECRET_KEY:?}
       KANEO_CLIENT_URL: https://kaneo.algebananazzzzz.com
       KANEO_API_URL: https://kaneo.algebananazzzzz.com
       CUSTOM_OAUTH_CLIENT_ID: kaneo
