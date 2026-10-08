@@ -35,6 +35,7 @@ services:
       DISABLE_PASSWORD_REGISTRATION: "true"
       DISABLE_LOGIN_FORM: "true"
       NODE_EXTRA_CA_CERTS: /etc/ssl/certs/ca-certificates.crt
+      KANEO_ALLOW_PRIVATE_WEBHOOK_DESTINATIONS: "true"
     ports:
       - "5173:5173/tcp"
     volumes:

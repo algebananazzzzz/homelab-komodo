@@ -54,6 +54,27 @@ OIDC_CLIENT_SECRET='[[KANEO_OIDC_CLIENT_SECRET]]'
 config_files = ["consul/kaneo.json"]
 
 [[stack]]
+name = "ntfy"
+description = "Push notifications at ntfy.algebananazzzzz.com."
+tags = ["apps"]
+deploy = true
+
+[stack.config]
+server = "svc-apps-01"
+repo = "algebananazzzzz/homelab-komodo"
+branch = "main"
+run_directory = "stacks/apps/ntfy"
+file_paths = ["compose.yml"]
+ignore_services = ["register"]
+# Single quotes keep Compose from expanding a `$` inside a value.
+environment = """
+NTFY_PASSWORD_HASH='[[NTFY_PASSWORD_HASH]]'
+NTFY_KANEO_TOKEN='[[NTFY_KANEO_TOKEN]]'
+"""
+# A sync redeploys a stack only when a listed file changes, so every file the stack reads is listed.
+config_files = ["consul/ntfy.json"]
+
+[[stack]]
 name = "outline"
 description = "Wiki at outline.algebananazzzzz.com."
 tags = ["apps"]

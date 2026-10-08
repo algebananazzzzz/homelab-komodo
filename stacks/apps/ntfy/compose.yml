@@ -1,0 +1,42 @@
+name: ntfy
+
+services:
+  register:
+    image: curlimages/curl:8.22.0
+    network_mode: host
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        set -e
+        for f in /consul/*.json; do
+          curl -sSf -X PUT --data-binary "@$$f" http://127.0.0.1:8500/v1/agent/service/register
+          echo "registered $$f"
+        done
+    volumes:
+      - ./consul:/consul:ro
+
+  ntfy:
+    container_name: ntfy
+    image: binwiederhier/ntfy:v2.28.0
+    command: serve
+    depends_on:
+      register:
+        condition: service_completed_successfully
+    environment:
+      NTFY_BASE_URL: https://ntfy.algebananazzzzz.com
+      NTFY_BEHIND_PROXY: "true"
+      NTFY_CACHE_FILE: /var/lib/ntfy/cache.db
+      NTFY_AUTH_FILE: /var/lib/ntfy/auth.db
+      NTFY_AUTH_DEFAULT_ACCESS: deny-all
+      NTFY_AUTH_USERS: daniel:${NTFY_PASSWORD_HASH:?}:user,kaneo:$$2b$$10$$ajpvJNIoSxB51/aHrUwYYejAR1sT5RNW80e9NeVP9UbtNxjbeAiwS:user
+      NTFY_AUTH_ACCESS: daniel:*:ro,kaneo:kaneo:wo
+      NTFY_AUTH_TOKENS: kaneo:${NTFY_KANEO_TOKEN:?}:kaneo
+    ports:
+      - "8092:80/tcp"
+    volumes:
+      - data:/var/lib/ntfy
+    restart: unless-stopped
+
+volumes:
+  data:
+    name: homelab-ntfy-data

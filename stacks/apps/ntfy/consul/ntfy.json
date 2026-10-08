@@ -1,0 +1,13 @@
+{
+  "ID": "ntfy",
+  "Name": "ntfy",
+  "Port": 8092,
+  "Tags": [
+    "traefik.enable=true",
+    "traefik.http.routers.ntfy.entrypoints=web,websecure",
+    "traefik.http.routers.ntfy.rule=Host(`ntfy.algebananazzzzz.com`)",
+    "traefik.http.routers.ntfy.tls=true",
+    "traefik.http.services.ntfy.loadbalancer.server.port=8092"
+  ],
+  "Check": {"HTTP": "http://127.0.0.1:8092/v1/health", "Interval": "10s", "Timeout": "5s"}
+}
