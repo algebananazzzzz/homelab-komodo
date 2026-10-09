@@ -46,8 +46,6 @@ ignore_services = ["register"]
 # Single quotes keep Compose from expanding a `$` inside a value.
 environment = """
 AUTHENTIK_SECRET_KEY='[[AUTHENTIK_SECRET_KEY]]'
-ADMIN_EMAIL='[[ADMIN_EMAIL]]'
-ADMIN_PASSWORD='[[ADMIN_PASSWORD]]'
 SMTP_HOST='[[SMTP_HOST]]'
 SMTP_PORT='[[SMTP_PORT]]'
 SMTP_USERNAME='[[SMTP_USERNAME]]'
