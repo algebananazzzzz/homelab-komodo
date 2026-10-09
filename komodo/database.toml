@@ -13,7 +13,7 @@ file_paths = ["compose.yml"]
 ignore_services = ["register"]
 # Single quotes keep Compose from expanding a `$` inside a value.
 environment = """
-POSTGRES_PASSWORD='[[POSTGRES_PASSWORD]]'
+POSTGRES_PASSWORD='[[POSTGRES_ADMIN_PASSWORD]]'
 """
 # A sync redeploys a stack only when a listed file changes, so every file the stack reads is listed.
 config_files = ["consul/postgres.json", "initdb/10-databases.sql"]
@@ -33,7 +33,7 @@ file_paths = ["compose.yml"]
 ignore_services = ["register"]
 # Single quotes keep Compose from expanding a `$` inside a value.
 environment = """
-REDIS_PASSWORD='[[REDIS_PASSWORD]]'
+REDIS_PASSWORD='[[REDIS_DEFAULT_PASSWORD]]'
 """
 # A sync redeploys a stack only when a listed file changes, so every file the stack reads is listed.
 config_files = ["consul/redis.json"]

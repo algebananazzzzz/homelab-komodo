@@ -11,6 +11,9 @@ branch = "main"
 run_directory = "stacks/apps/beaverhabits"
 file_paths = ["compose.yml"]
 ignore_services = ["register"]
+environment = """
+ADMIN_EMAIL='[[ADMIN_EMAIL]]'
+"""
 # A sync redeploys a stack only when a listed file changes, so every file the stack reads is listed.
 config_files = ["consul/beaverhabits.json"]
 
@@ -46,7 +49,7 @@ file_paths = ["compose.yml"]
 ignore_services = ["register"]
 # Single quotes keep Compose from expanding a `$` inside a value.
 environment = """
-POSTGRES_PASSWORD='[[POSTGRES_PASSWORD]]'
+POSTGRES_PASSWORD='[[POSTGRES_ADMIN_PASSWORD]]'
 AUTH_SECRET='[[KANEO_AUTH_SECRET]]'
 OIDC_CLIENT_SECRET='[[KANEO_OIDC_CLIENT_SECRET]]'
 NOTIFICATION_SECRET_KEY='[[KANEO_NOTIFICATION_SECRET_KEY]]'
@@ -69,7 +72,8 @@ file_paths = ["compose.yml"]
 ignore_services = ["register"]
 # Single quotes keep Compose from expanding a `$` inside a value.
 environment = """
-NTFY_PASSWORD_HASH='[[NTFY_PASSWORD_HASH]]'
+ADMIN_USERNAME='[[ADMIN_USERNAME]]'
+ADMIN_PASSWORD_BCRYPT='[[ADMIN_PASSWORD_BCRYPT]]'
 NTFY_KANEO_TOKEN='[[NTFY_KANEO_TOKEN]]'
 """
 # A sync redeploys a stack only when a listed file changes, so every file the stack reads is listed.
@@ -90,11 +94,15 @@ file_paths = ["compose.yml"]
 ignore_services = ["register"]
 # Single quotes keep Compose from expanding a `$` inside a value.
 environment = """
-POSTGRES_PASSWORD='[[POSTGRES_PASSWORD]]'
-REDIS_PASSWORD='[[REDIS_PASSWORD]]'
+POSTGRES_PASSWORD='[[POSTGRES_ADMIN_PASSWORD]]'
+REDIS_PASSWORD='[[REDIS_DEFAULT_PASSWORD]]'
 SECRET_KEY='[[OUTLINE_SECRET_KEY]]'
 UTILS_SECRET='[[OUTLINE_UTILS_SECRET]]'
 OIDC_CLIENT_SECRET='[[OUTLINE_OIDC_CLIENT_SECRET]]'
+SMTP_HOST='[[SMTP_HOST]]'
+SMTP_PORT='[[SMTP_PORT]]'
+SMTP_USERNAME='[[SMTP_USERNAME]]'
+SMTP_PASSWORD='[[SMTP_PASSWORD]]'
 """
 # A sync redeploys a stack only when a listed file changes, so every file the stack reads is listed.
 config_files = ["consul/outline.json"]
@@ -114,7 +122,7 @@ file_paths = ["compose.yml"]
 ignore_services = ["register", "config_sync"]
 # Single quotes keep Compose from expanding a `$` inside a value.
 environment = """
-POSTGRES_PASSWORD='[[POSTGRES_PASSWORD]]'
+POSTGRES_PASSWORD='[[POSTGRES_ADMIN_PASSWORD]]'
 WINDMILL_OIDC_CLIENT_SECRET='[[WINDMILL_OIDC_CLIENT_SECRET]]'
 """
 # A sync redeploys a stack only when a listed file changes, so every file the stack reads is listed.

@@ -40,6 +40,13 @@ services:
       OIDC_USERINFO_URI: https://sso.algebananazzzzz.com/application/o/userinfo/
       OIDC_DISPLAY_NAME: HomeLab SSO
       OIDC_SCOPES: openid profile email
+      SMTP_HOST: ${SMTP_HOST:?}
+      SMTP_PORT: ${SMTP_PORT:?}
+      SMTP_USERNAME: ${SMTP_USERNAME:?}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:?}
+      SMTP_FROM_EMAIL: ${SMTP_USERNAME:?}
+      # Port 587 upgrades to TLS with STARTTLS; SMTP_SECURE means implicit TLS on 465.
+      SMTP_SECURE: "false"
       NODE_EXTRA_CA_CERTS: /etc/ssl/certs/ca-certificates.crt
     ports:
       - "3001:3000/tcp"

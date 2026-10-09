@@ -23,7 +23,7 @@ services:
         condition: service_completed_successfully
     environment:
       HABITS_STORAGE: USER_DISK
-      TRUSTED_LOCAL_EMAIL: daniel.zhouqx@gmail.com
+      TRUSTED_LOCAL_EMAIL: ${ADMIN_EMAIL:?}
     ports:
       - "8082:8080/tcp"
     volumes:

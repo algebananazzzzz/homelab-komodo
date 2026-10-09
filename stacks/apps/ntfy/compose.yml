@@ -28,8 +28,8 @@ services:
       NTFY_CACHE_FILE: /var/lib/ntfy/cache.db
       NTFY_AUTH_FILE: /var/lib/ntfy/auth.db
       NTFY_AUTH_DEFAULT_ACCESS: deny-all
-      NTFY_AUTH_USERS: daniel:${NTFY_PASSWORD_HASH:?}:user,kaneo:$$2b$$10$$ajpvJNIoSxB51/aHrUwYYejAR1sT5RNW80e9NeVP9UbtNxjbeAiwS:user
-      NTFY_AUTH_ACCESS: daniel:*:ro,kaneo:kaneo:wo
+      NTFY_AUTH_USERS: ${ADMIN_USERNAME:?}:${ADMIN_PASSWORD_BCRYPT:?}:user,kaneo:$$2b$$10$$ajpvJNIoSxB51/aHrUwYYejAR1sT5RNW80e9NeVP9UbtNxjbeAiwS:user
+      NTFY_AUTH_ACCESS: ${ADMIN_USERNAME:?}:*:ro,kaneo:kaneo:wo
       NTFY_AUTH_TOKENS: kaneo:${NTFY_KANEO_TOKEN:?}:kaneo
     ports:
       - "8092:80/tcp"
