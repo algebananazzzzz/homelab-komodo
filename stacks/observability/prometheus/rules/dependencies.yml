@@ -1,0 +1,54 @@
+groups:
+  - name: dependencies
+    rules:
+      - alert: PostgresConnectionsHigh
+        expr: sum by (instance_name) (pg_stat_activity_count) / max by (instance_name) (pg_settings_max_connections) > 0.8
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Postgres is using {{ $value | humanizePercentage }} of max_connections"
+          description: "Postgres on {{ $labels.instance_name }} has used more than 80% of its connection slots for 5 minutes."
+          runbook_url: https://outline.algebananazzzzz.com/collection/runbooks
+      - alert: PostgresDeadlocks
+        expr: increase(pg_stat_database_deadlocks[5m]) > 0
+        labels:
+          severity: warning
+        annotations:
+          summary: "Deadlocks in the {{ $labels.datname }} database"
+          description: "Postgres aborted a transaction in {{ $labels.datname }} to break a deadlock in the last 5 minutes."
+          runbook_url: https://outline.algebananazzzzz.com/collection/runbooks
+      - alert: RedisMemoryHigh
+        expr: redis_memory_used_bytes > 1073741824
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Redis is using {{ $value | humanize1024 }}B of memory"
+          description: "Redis memory has stayed above 1 GiB for 5 minutes. It runs with noeviction, so it keeps growing until the host runs out."
+          runbook_url: https://outline.algebananazzzzz.com/collection/runbooks
+      - alert: ConsulCheckFailing
+        expr: consul_health_service_status{status="critical"} == 1
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Consul health check for {{ $labels.service_name }} on {{ $labels.node }} is failing"
+          description: "Consul's own health check for {{ $labels.service_name }} has been critical for 5 minutes."
+          runbook_url: https://outline.algebananazzzzz.com/collection/runbooks
+      - alert: CertExpiringSoon
+        expr: probe_ssl_earliest_cert_expiry - time() < 14 * 86400
+        labels:
+          severity: warning
+        annotations:
+          summary: "The certificate for {{ $labels.instance }} expires in {{ $value | humanizeDuration }}"
+          description: "The TLS certificate served for {{ $labels.instance }} expires within 14 days."
+          runbook_url: https://outline.algebananazzzzz.com/collection/runbooks
+      - alert: CertExpiringNow
+        expr: probe_ssl_earliest_cert_expiry - time() < 3 * 86400
+        labels:
+          severity: critical
+        annotations:
+          summary: "The certificate for {{ $labels.instance }} expires in {{ $value | humanizeDuration }}"
+          description: "The TLS certificate served for {{ $labels.instance }} expires within 3 days."
+          runbook_url: https://outline.algebananazzzzz.com/collection/runbooks

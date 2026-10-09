@@ -1,0 +1,108 @@
+rule_files:
+  - ../rules/recording.yml
+  - ../rules/hosts.yml
+evaluation_interval: 15s
+tests:
+  - interval: 15s
+    input_series:
+      - series: 'up{job="node",instance_name="svc-db-01"}'
+        values: '0x20'
+      - series: 'up{job="node",instance_name="svc-apps-01"}'
+        values: '1x20'
+    alert_rule_test:
+      - eval_time: 1m
+        alertname: HostDown
+        exp_alerts: []
+      - eval_time: 3m
+        alertname: HostDown
+        exp_alerts:
+          - exp_labels: {severity: critical, job: node, instance_name: svc-db-01}
+            exp_annotations:
+              summary: "svc-db-01 is down"
+              description: "node_exporter on svc-db-01 has not answered for 2 minutes."
+              runbook_url: https://outline.algebananazzzzz.com/collection/runbooks
+
+  # svc-db-01's root is 95% used; svc-apps-01's is 50% used.
+  - interval: 1m
+    input_series:
+      - series: 'node_filesystem_avail_bytes{instance_name="svc-db-01",mountpoint="/",fstype="ext4"}'
+        values: '1000000000x10'
+      - series: 'node_filesystem_size_bytes{instance_name="svc-db-01",mountpoint="/",fstype="ext4"}'
+        values: '20000000000x10'
+      - series: 'node_filesystem_avail_bytes{instance_name="svc-apps-01",mountpoint="/",fstype="ext4"}'
+        values: '15000000000x10'
+      - series: 'node_filesystem_size_bytes{instance_name="svc-apps-01",mountpoint="/",fstype="ext4"}'
+        values: '30000000000x10'
+    alert_rule_test:
+      - eval_time: 3m
+        alertname: DiskAlmostFull
+        exp_alerts: []
+      - eval_time: 6m
+        alertname: DiskAlmostFull
+        exp_alerts:
+          - exp_labels: {severity: critical, instance_name: svc-db-01, mountpoint: /, fstype: ext4}
+            exp_annotations:
+              summary: "svc-db-01 / is 95% full"
+              description: "/ on svc-db-01 is above 90% used."
+              runbook_url: https://outline.algebananazzzzz.com/collection/runbooks
+
+  # svc-apps-01 loses 0.5 GB every 15 minutes from 15 GB free; svc-db-01 stays flat.
+  - interval: 15m
+    input_series:
+      - series: 'node_filesystem_avail_bytes{instance_name="svc-apps-01",mountpoint="/",fstype="ext4"}'
+        values: '15000000000-500000000x28'
+      - series: 'node_filesystem_avail_bytes{instance_name="svc-db-01",mountpoint="/",fstype="ext4"}'
+        values: '1000000000x28'
+    alert_rule_test:
+      - eval_time: 7h
+        alertname: DiskWillFillIn24h
+        exp_alerts:
+          - exp_labels: {severity: warning, instance_name: svc-apps-01, mountpoint: /, fstype: ext4}
+            exp_annotations:
+              summary: "svc-apps-01 / will fill within 24 hours"
+              description: "At the rate of the last 6 hours, / on svc-apps-01 runs out of space within a day."
+              runbook_url: https://outline.algebananazzzzz.com/collection/runbooks
+
+  - interval: 1m
+    input_series:
+      - series: 'node_memory_MemAvailable_bytes{instance_name="hv-01"}'
+        values: '2000000000x20'
+      - series: 'node_memory_MemTotal_bytes{instance_name="hv-01"}'
+        values: '32000000000x20'
+      - series: 'node_memory_MemAvailable_bytes{instance_name="svc-db-01"}'
+        values: '2000000000x20'
+      - series: 'node_memory_MemTotal_bytes{instance_name="svc-db-01"}'
+        values: '4000000000x20'
+      - series: 'node_vmstat_pswpin{instance_name="hv-01"}'
+        values: '0+12000x20'
+      - series: 'node_vmstat_pswpin{instance_name="svc-db-01"}'
+        values: '0+60x20'
+      - series: 'node_cpu_seconds_total{instance_name="hv-01",cpu="0",mode="iowait"}'
+        values: '0+30x20'
+      - series: 'node_cpu_seconds_total{instance_name="svc-db-01",cpu="0",mode="iowait"}'
+        values: '0+1x20'
+    alert_rule_test:
+      - eval_time: 12m
+        alertname: LowMemory
+        exp_alerts:
+          - exp_labels: {severity: warning, instance_name: hv-01}
+            exp_annotations:
+              summary: "hv-01 has 6.25% memory available"
+              description: "Available memory on hv-01 has stayed below 10% for 10 minutes."
+              runbook_url: https://outline.algebananazzzzz.com/collection/runbooks
+      - eval_time: 20m
+        alertname: SwapActivity
+        exp_alerts:
+          - exp_labels: {severity: warning, instance_name: hv-01}
+            exp_annotations:
+              summary: "hv-01 is swapping in 200 pages/s"
+              description: "hv-01 has read more than 100 pages/s back from swap for 15 minutes, so something is short of memory."
+              runbook_url: https://outline.algebananazzzzz.com/collection/runbooks
+      - eval_time: 20m
+        alertname: HighIOWait
+        exp_alerts:
+          - exp_labels: {severity: warning, instance_name: hv-01}
+            exp_annotations:
+              summary: "hv-01 spends 50% of CPU time waiting on disk"
+              description: "iowait on hv-01 has stayed above 20% for 15 minutes."
+              runbook_url: https://outline.algebananazzzzz.com/collection/runbooks

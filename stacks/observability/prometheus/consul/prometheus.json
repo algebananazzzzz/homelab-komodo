@@ -1,0 +1,15 @@
+{
+  "ID": "prometheus",
+  "Name": "prometheus",
+  "Port": 9090,
+  "Tags": [
+    "traefik.enable=true",
+    "traefik.http.routers.prometheus.entrypoints=web,websecure",
+    "traefik.http.routers.prometheus.rule=Host(`prometheus.ops.home.arpa`)",
+    "traefik.http.routers.prometheus.tls=true",
+    "traefik.http.services.prometheus.loadbalancer.server.port=9090",
+    "prometheus.scrape=true",
+    "prometheus.path=/metrics"
+  ],
+  "Check": {"HTTP": "http://127.0.0.1:9090/-/healthy", "Interval": "10s", "Timeout": "5s"}
+}

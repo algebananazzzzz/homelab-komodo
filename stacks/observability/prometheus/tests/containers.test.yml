@@ -1,0 +1,57 @@
+rule_files:
+  - ../rules/containers.yml
+evaluation_interval: 15s
+tests:
+  - interval: 1m
+    input_series:
+      - series: 'container_oom_events_total{instance_name="svc-apps-01",name="outline"}'
+        values: '0 0 0 1 1 1'
+      - series: 'container_oom_events_total{instance_name="svc-apps-01",name="kaneo"}'
+        values: '0x5'
+      - series: 'container_start_time_seconds{instance_name="svc-apps-01",name="outline"}'
+        values: '100 100 220 340 460 580'
+      - series: 'container_start_time_seconds{instance_name="svc-apps-01",name="kaneo"}'
+        values: '100x5'
+    alert_rule_test:
+      - eval_time: 1m
+        alertname: ContainerOOMKilled
+        exp_alerts: []
+      - eval_time: 4m
+        alertname: ContainerOOMKilled
+        exp_alerts:
+          - exp_labels: {severity: warning, instance_name: svc-apps-01, name: outline}
+            exp_annotations:
+              summary: "outline on svc-apps-01 was OOM-killed"
+              description: "The kernel killed a process in outline for exceeding its memory."
+              runbook_url: https://outline.algebananazzzzz.com/collection/runbooks
+      - eval_time: 5m
+        alertname: ContainerRestartLoop
+        exp_alerts:
+          - exp_labels: {severity: warning, instance_name: svc-apps-01, name: outline}
+            exp_annotations:
+              summary: "outline on svc-apps-01 restarted 4 times in 15 minutes"
+              description: "outline keeps starting and exiting."
+              runbook_url: https://outline.algebananazzzzz.com/collection/runbooks
+
+  - interval: 1m
+    input_series:
+      - series: 'container_cpu_cfs_periods_total{instance_name="svc-apps-01",name="windmill-worker"}'
+        values: '0+600x25'
+      - series: 'container_cpu_cfs_throttled_periods_total{instance_name="svc-apps-01",name="windmill-worker"}'
+        values: '0+300x25'
+      - series: 'container_cpu_cfs_periods_total{instance_name="svc-apps-01",name="kaneo"}'
+        values: '0+600x25'
+      - series: 'container_cpu_cfs_throttled_periods_total{instance_name="svc-apps-01",name="kaneo"}'
+        values: '0x25'
+    alert_rule_test:
+      - eval_time: 10m
+        alertname: ContainerCPUThrottled
+        exp_alerts: []
+      - eval_time: 21m
+        alertname: ContainerCPUThrottled
+        exp_alerts:
+          - exp_labels: {severity: info, instance_name: svc-apps-01, name: windmill-worker}
+            exp_annotations:
+              summary: "windmill-worker on svc-apps-01 is CPU-throttled 50% of the time"
+              description: "windmill-worker keeps hitting its CPU limit."
+              runbook_url: https://outline.algebananazzzzz.com/collection/runbooks

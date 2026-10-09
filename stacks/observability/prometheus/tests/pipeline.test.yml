@@ -1,0 +1,56 @@
+rule_files:
+  - ../rules/pipeline.yml
+evaluation_interval: 15s
+tests:
+  - interval: 1m
+    input_series:
+      - series: 'up{job="postgres-exporter",instance="10.10.20.20:9187",instance_name="svc-db-01"}'
+        values: '0x10'
+      - series: 'up{job="node",instance="10.10.20.30:9100",instance_name="svc-apps-01"}'
+        values: '1x10'
+      - series: 'fluentbit_output_errors_total{instance_name="svc-apps-01",name="loki.0"}'
+        values: '0 0 3 3 3 3 3 3 3 3 3'
+      - series: 'fluentbit_output_retries_failed_total{instance_name="svc-apps-01",name="loki.0"}'
+        values: '0x10'
+      - series: 'fluentbit_output_errors_total{instance_name="svc-db-01",name="loki.0"}'
+        values: '0x10'
+      - series: 'fluentbit_output_retries_failed_total{instance_name="svc-db-01",name="loki.0"}'
+        values: '0x10'
+      - series: 'alertmanager_notifications_failed_total{instance_name="mgmt-obs-01",integration="webhook"}'
+        values: '0 0 0 2 2 2 2 2 2 2 2'
+    alert_rule_test:
+      - eval_time: 3m
+        alertname: TargetDown
+        exp_alerts: []
+      - eval_time: 6m
+        alertname: TargetDown
+        exp_alerts:
+          - exp_labels: {severity: warning, job: postgres-exporter, instance: "10.10.20.20:9187", instance_name: svc-db-01}
+            exp_annotations:
+              summary: "Prometheus cannot scrape postgres-exporter on svc-db-01"
+              description: "The postgres-exporter target at 10.10.20.20:9187 has been down for 5 minutes."
+              runbook_url: https://outline.algebananazzzzz.com/collection/runbooks
+      - eval_time: 4m
+        alertname: FluentBitOutputErrors
+        exp_alerts:
+          - exp_labels: {severity: warning, instance_name: svc-apps-01, name: loki.0}
+            exp_annotations:
+              summary: "Fluent Bit on svc-apps-01 is failing to ship logs"
+              description: "Fluent Bit's loki.0 output reported errors or gave up on retries in the last 10 minutes."
+              runbook_url: https://outline.algebananazzzzz.com/collection/runbooks
+      - eval_time: 5m
+        alertname: AlertmanagerNotificationsFailing
+        exp_alerts:
+          - exp_labels: {severity: warning, instance_name: mgmt-obs-01, integration: webhook}
+            exp_annotations:
+              summary: "Alertmanager failed to deliver to webhook"
+              description: "Alertmanager could not deliver notifications through webhook in the last 10 minutes, so this alert may not reach you either."
+              runbook_url: https://outline.algebananazzzzz.com/collection/runbooks
+      - eval_time: 0m
+        alertname: Watchdog
+        exp_alerts:
+          - exp_labels: {severity: none}
+            exp_annotations:
+              summary: "The alerting pipeline is running"
+              description: "This alert always fires."
+              runbook_url: https://outline.algebananazzzzz.com/collection/runbooks

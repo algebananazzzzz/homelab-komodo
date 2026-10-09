@@ -1,0 +1,59 @@
+name: prometheus
+
+services:
+  register:
+    image: curlimages/curl:8.22.0
+    network_mode: host
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        set -e
+        for f in /consul/*.json; do
+          curl -sSf -X PUT --data-binary "@$$f" http://127.0.0.1:8500/v1/agent/service/register
+          echo "registered $$f"
+        done
+    volumes:
+      - ./consul:/consul:ro
+
+  prometheus:
+    container_name: prometheus
+    image: prom/prometheus:v3.13.4
+    depends_on:
+      register:
+        condition: service_completed_successfully
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.path=/prometheus
+      - --storage.tsdb.retention.time=7d
+      - --storage.tsdb.retention.size=5GB
+      - --storage.tsdb.wal-compression
+      - --web.external-url=https://prometheus.ops.home.arpa
+    ports:
+      - "9090:9090/tcp"
+    volumes:
+      - ./config/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./rules:/etc/prometheus/rules:ro
+      - data:/prometheus
+    restart: unless-stopped
+
+  blackbox:
+    container_name: blackbox
+    image: prom/blackbox-exporter:v0.29.0
+    command:
+      - --config.file=/etc/blackbox/blackbox.yml
+    volumes:
+      - ./config/blackbox.yml:/etc/blackbox/blackbox.yml:ro
+      # Ansible's internal_ca role adds the homelab CA to the host bundle.
+      - /etc/ssl/certs/ca-certificates.crt:/etc/ssl/certs/ca-certificates.crt:ro
+    restart: unless-stopped
+
+  consul-exporter:
+    container_name: consul-exporter
+    image: prom/consul-exporter:v0.13.0
+    command:
+      - --consul.server=10.10.10.20:8500
+    restart: unless-stopped
+
+volumes:
+  data:
+    name: homelab-prometheus-data

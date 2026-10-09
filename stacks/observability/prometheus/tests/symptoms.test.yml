@@ -1,0 +1,85 @@
+rule_files:
+  - ../rules/recording.yml
+  - ../rules/symptoms.yml
+evaluation_interval: 15s
+tests:
+  - interval: 15s
+    input_series:
+      - series: 'probe_success{job="blackbox",instance="https://outline.algebananazzzzz.com",service="outline"}'
+        values: '0x20'
+      - series: 'probe_success{job="blackbox",instance="https://kaneo.algebananazzzzz.com",service="kaneo"}'
+        values: '1x20'
+    alert_rule_test:
+      - eval_time: 1m
+        alertname: ServiceDown
+        exp_alerts: []
+      - eval_time: 3m
+        alertname: ServiceDown
+        exp_alerts:
+          - exp_labels: {severity: critical, job: blackbox, instance: "https://outline.algebananazzzzz.com", service: outline}
+            exp_annotations:
+              summary: "outline is unreachable"
+              description: "The HTTPS probe to https://outline.algebananazzzzz.com has failed for 2 minutes."
+              runbook_url: https://outline.algebananazzzzz.com/collection/runbooks
+
+  # outline: 10 of 100 requests/15s fail (10%); kaneo: none fail.
+  - interval: 15s
+    input_series:
+      - series: 'traefik_service_requests_total{service="outline@consulcatalog",code="200"}'
+        values: '0+90x80'
+      - series: 'traefik_service_requests_total{service="outline@consulcatalog",code="502"}'
+        values: '0+10x80'
+      - series: 'traefik_service_requests_total{service="kaneo@consulcatalog",code="200"}'
+        values: '0+100x80'
+    alert_rule_test:
+      - eval_time: 4m
+        alertname: HighErrorRate
+        exp_alerts: []
+      - eval_time: 11m
+        alertname: HighErrorRate
+        exp_alerts:
+          - exp_labels: {severity: critical, service: outline}
+            exp_annotations:
+              summary: "outline is failing 10% of requests"
+              description: "More than 5% of requests to outline through Traefik have returned 5xx for 5 minutes."
+              runbook_url: https://outline.algebananazzzzz.com/collection/runbooks
+      - eval_time: 11m
+        alertname: ElevatedErrorRate
+        exp_alerts:
+          - exp_labels: {severity: warning, service: outline}
+            exp_annotations:
+              summary: "outline failed 10% of requests over the last hour"
+              description: "More than 1% of requests to outline returned 5xx, averaged over 1 hour."
+              runbook_url: https://outline.algebananazzzzz.com/collection/runbooks
+
+  # outline: every request takes 2.5-5s; kaneo: every request is under 0.1s.
+  - interval: 15s
+    input_series:
+      - series: 'traefik_service_request_duration_seconds_bucket{service="outline@consulcatalog",le="0.1"}'
+        values: '0x60'
+      - series: 'traefik_service_request_duration_seconds_bucket{service="outline@consulcatalog",le="2.5"}'
+        values: '0x60'
+      - series: 'traefik_service_request_duration_seconds_bucket{service="outline@consulcatalog",le="5"}'
+        values: '0+10x60'
+      - series: 'traefik_service_request_duration_seconds_bucket{service="outline@consulcatalog",le="+Inf"}'
+        values: '0+10x60'
+      - series: 'traefik_service_request_duration_seconds_bucket{service="kaneo@consulcatalog",le="0.1"}'
+        values: '0+10x60'
+      - series: 'traefik_service_request_duration_seconds_bucket{service="kaneo@consulcatalog",le="2.5"}'
+        values: '0+10x60'
+      - series: 'traefik_service_request_duration_seconds_bucket{service="kaneo@consulcatalog",le="5"}'
+        values: '0+10x60'
+      - series: 'traefik_service_request_duration_seconds_bucket{service="kaneo@consulcatalog",le="+Inf"}'
+        values: '0+10x60'
+    alert_rule_test:
+      - eval_time: 8m
+        alertname: SlowResponses
+        exp_alerts: []
+      - eval_time: 14m
+        alertname: SlowResponses
+        exp_alerts:
+          - exp_labels: {severity: warning, service: outline}
+            exp_annotations:
+              summary: "outline p95 latency is 4.875s"
+              description: "95th percentile latency for outline has stayed above 2s for 10 minutes."
+              runbook_url: https://outline.algebananazzzzz.com/collection/runbooks

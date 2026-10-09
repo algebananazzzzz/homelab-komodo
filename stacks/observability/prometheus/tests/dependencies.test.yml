@@ -1,0 +1,90 @@
+rule_files:
+  - ../rules/dependencies.yml
+evaluation_interval: 15s
+tests:
+  - interval: 1m
+    input_series:
+      - series: 'pg_stat_activity_count{instance_name="svc-db-01",datname="outline",state="idle"}'
+        values: '50x10'
+      - series: 'pg_stat_activity_count{instance_name="svc-db-01",datname="kaneo",state="active"}'
+        values: '40x10'
+      - series: 'pg_settings_max_connections{instance_name="svc-db-01"}'
+        values: '100x10'
+      - series: 'pg_stat_database_deadlocks{instance_name="svc-db-01",datname="kaneo"}'
+        values: '0 0 0 1 1 1 1 1 1 1 1'
+      - series: 'pg_stat_database_deadlocks{instance_name="svc-db-01",datname="outline"}'
+        values: '0x10'
+      - series: 'redis_memory_used_bytes{instance_name="svc-db-01"}'
+        values: '2147483648x10'
+      - series: 'consul_health_service_status{node="svc-apps-01",service_name="outline",status="critical"}'
+        values: '1x10'
+      - series: 'consul_health_service_status{node="svc-apps-01",service_name="kaneo",status="critical"}'
+        values: '0x10'
+    alert_rule_test:
+      - eval_time: 2m
+        alertname: PostgresConnectionsHigh
+        exp_alerts: []
+      - eval_time: 6m
+        alertname: PostgresConnectionsHigh
+        exp_alerts:
+          - exp_labels: {severity: warning, instance_name: svc-db-01}
+            exp_annotations:
+              summary: "Postgres is using 90% of max_connections"
+              description: "Postgres on svc-db-01 has used more than 80% of its connection slots for 5 minutes."
+              runbook_url: https://outline.algebananazzzzz.com/collection/runbooks
+      - eval_time: 4m
+        alertname: PostgresDeadlocks
+        exp_alerts:
+          - exp_labels: {severity: warning, instance_name: svc-db-01, datname: kaneo}
+            exp_annotations:
+              summary: "Deadlocks in the kaneo database"
+              description: "Postgres aborted a transaction in kaneo to break a deadlock in the last 5 minutes."
+              runbook_url: https://outline.algebananazzzzz.com/collection/runbooks
+      - eval_time: 6m
+        alertname: RedisMemoryHigh
+        exp_alerts:
+          - exp_labels: {severity: warning, instance_name: svc-db-01}
+            exp_annotations:
+              summary: "Redis is using 2GiB of memory"
+              description: "Redis memory has stayed above 1 GiB for 5 minutes. It runs with noeviction, so it keeps growing until the host runs out."
+              runbook_url: https://outline.algebananazzzzz.com/collection/runbooks
+      - eval_time: 6m
+        alertname: ConsulCheckFailing
+        exp_alerts:
+          - exp_labels: {severity: warning, node: svc-apps-01, service_name: outline, status: critical}
+            exp_annotations:
+              summary: "Consul health check for outline on svc-apps-01 is failing"
+              description: "Consul's own health check for outline has been critical for 5 minutes."
+              runbook_url: https://outline.algebananazzzzz.com/collection/runbooks
+
+  # Test time starts at 0, so expiry timestamps are seconds from the start: 10 days, 2 days, and 60 days.
+  - interval: 1m
+    input_series:
+      - series: 'probe_ssl_earliest_cert_expiry{instance="https://kaneo.algebananazzzzz.com"}'
+        values: '864000x5'
+      - series: 'probe_ssl_earliest_cert_expiry{instance="https://outline.algebananazzzzz.com"}'
+        values: '172800x5'
+      - series: 'probe_ssl_earliest_cert_expiry{instance="https://windmill.algebananazzzzz.com"}'
+        values: '5184000x5'
+    alert_rule_test:
+      - eval_time: 0m
+        alertname: CertExpiringSoon
+        exp_alerts:
+          - exp_labels: {severity: warning, instance: "https://kaneo.algebananazzzzz.com"}
+            exp_annotations:
+              summary: "The certificate for https://kaneo.algebananazzzzz.com expires in 10d 0h 0m 0s"
+              description: "The TLS certificate served for https://kaneo.algebananazzzzz.com expires within 14 days."
+              runbook_url: https://outline.algebananazzzzz.com/collection/runbooks
+          - exp_labels: {severity: warning, instance: "https://outline.algebananazzzzz.com"}
+            exp_annotations:
+              summary: "The certificate for https://outline.algebananazzzzz.com expires in 2d 0h 0m 0s"
+              description: "The TLS certificate served for https://outline.algebananazzzzz.com expires within 14 days."
+              runbook_url: https://outline.algebananazzzzz.com/collection/runbooks
+      - eval_time: 0m
+        alertname: CertExpiringNow
+        exp_alerts:
+          - exp_labels: {severity: critical, instance: "https://outline.algebananazzzzz.com"}
+            exp_annotations:
+              summary: "The certificate for https://outline.algebananazzzzz.com expires in 2d 0h 0m 0s"
+              description: "The TLS certificate served for https://outline.algebananazzzzz.com expires within 3 days."
+              runbook_url: https://outline.algebananazzzzz.com/collection/runbooks

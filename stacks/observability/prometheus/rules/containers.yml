@@ -1,0 +1,30 @@
+groups:
+  - name: containers
+    rules:
+      - alert: ContainerOOMKilled
+        expr: increase(container_oom_events_total{name!=""}[5m]) > 0
+        labels:
+          severity: warning
+        annotations:
+          summary: "{{ $labels.name }} on {{ $labels.instance_name }} was OOM-killed"
+          description: "The kernel killed a process in {{ $labels.name }} for exceeding its memory."
+          runbook_url: https://outline.algebananazzzzz.com/collection/runbooks
+      - alert: ContainerRestartLoop
+        expr: changes(container_start_time_seconds{name!=""}[15m]) > 3
+        labels:
+          severity: warning
+        annotations:
+          summary: "{{ $labels.name }} on {{ $labels.instance_name }} restarted {{ $value }} times in 15 minutes"
+          description: "{{ $labels.name }} keeps starting and exiting."
+          runbook_url: https://outline.algebananazzzzz.com/collection/runbooks
+      - alert: ContainerCPUThrottled
+        expr: |
+          rate(container_cpu_cfs_throttled_periods_total{name!=""}[5m])
+            / rate(container_cpu_cfs_periods_total{name!=""}[5m]) > 0.25
+        for: 15m
+        labels:
+          severity: info
+        annotations:
+          summary: "{{ $labels.name }} on {{ $labels.instance_name }} is CPU-throttled {{ $value | humanizePercentage }} of the time"
+          description: "{{ $labels.name }} keeps hitting its CPU limit."
+          runbook_url: https://outline.algebananazzzzz.com/collection/runbooks

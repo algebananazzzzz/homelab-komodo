@@ -1,0 +1,39 @@
+groups:
+  - name: symptoms
+    rules:
+      - alert: ServiceDown
+        expr: probe_success == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "{{ $labels.service }} is unreachable"
+          description: "The HTTPS probe to {{ $labels.instance }} has failed for 2 minutes."
+          runbook_url: https://outline.algebananazzzzz.com/collection/runbooks
+      - alert: HighErrorRate
+        expr: service:error_ratio:rate5m > 0.05
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "{{ $labels.service }} is failing {{ $value | humanizePercentage }} of requests"
+          description: "More than 5% of requests to {{ $labels.service }} through Traefik have returned 5xx for 5 minutes."
+          runbook_url: https://outline.algebananazzzzz.com/collection/runbooks
+      - alert: ElevatedErrorRate
+        expr: service:error_ratio:rate1h > 0.01
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "{{ $labels.service }} failed {{ $value | humanizePercentage }} of requests over the last hour"
+          description: "More than 1% of requests to {{ $labels.service }} returned 5xx, averaged over 1 hour."
+          runbook_url: https://outline.algebananazzzzz.com/collection/runbooks
+      - alert: SlowResponses
+        expr: service:latency_seconds:p95 > 2
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "{{ $labels.service }} p95 latency is {{ $value | humanizeDuration }}"
+          description: "95th percentile latency for {{ $labels.service }} has stayed above 2s for 10 minutes."
+          runbook_url: https://outline.algebananazzzzz.com/collection/runbooks

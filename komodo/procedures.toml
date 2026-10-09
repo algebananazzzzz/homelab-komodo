@@ -23,6 +23,12 @@ description = "Deploy every app stack in dependency order."
 tags = ["komodo"]
 
 [[procedure.config.stage]]
+name = "Observability"
+executions = [
+  { execution.type = "DeployStack", execution.params.stack = "prometheus", execution.params.services = [] },
+]
+
+[[procedure.config.stage]]
 name = "Databases"
 executions = [
   { execution.type = "DeployStack", execution.params.stack = "postgres", execution.params.services = [] },

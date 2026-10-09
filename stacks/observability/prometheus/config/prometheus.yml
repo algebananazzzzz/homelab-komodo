@@ -1,0 +1,89 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+rule_files:
+  - /etc/prometheus/rules/*.yml
+
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets: [10.10.10.20:9093]
+
+scrape_configs:
+  # Everything registered in Consul with the prometheus.scrape=true tag.
+  - job_name: consul
+    consul_sd_configs:
+      - server: 10.10.10.20:8500
+    relabel_configs:
+      - source_labels: [__meta_consul_tags]
+        regex: .*,prometheus\.scrape=true,.*
+        action: keep
+      - source_labels: [__meta_consul_tags]
+        regex: .*,prometheus\.path=([^,]+),.*
+        target_label: __metrics_path__
+      - source_labels: [__meta_consul_service]
+        target_label: job
+      - source_labels: [__meta_consul_node]
+        target_label: instance_name
+
+  # hv-01 runs no Consul agent, so its agents are listed here.
+  - job_name: node
+    static_configs:
+      - targets: [10.10.10.1:9100]
+        labels: {instance_name: hv-01}
+  - job_name: cadvisor
+    static_configs:
+      - targets: [10.10.10.1:8081]
+        labels: {instance_name: hv-01}
+  - job_name: fluent-bit
+    metrics_path: /api/v2/metrics/prometheus
+    static_configs:
+      - targets: [10.10.10.1:2020]
+        labels: {instance_name: hv-01}
+
+  # Probes the first Host(`...`) of every service Traefik routes from Consul.
+  - job_name: blackbox
+    metrics_path: /probe
+    params:
+      module: [http_2xx]
+    consul_sd_configs:
+      - server: 10.10.10.20:8500
+    relabel_configs:
+      - source_labels: [__meta_consul_tags]
+        regex: .*,traefik\.http\.routers\.[^.]+\.rule=Host\(`([^`]+)`\).*
+        target_label: __param_target
+        replacement: https://$1
+      - source_labels: [__param_target]
+        regex: .+
+        action: keep
+      # A service whose / is not meant to answer 2xx opts out with this tag.
+      - source_labels: [__meta_consul_tags]
+        regex: .*,prometheus\.probe=false,.*
+        action: drop
+      - source_labels: [__param_target]
+        target_label: instance
+      - source_labels: [__meta_consul_service]
+        target_label: service
+      - target_label: __address__
+        replacement: blackbox:9115
+
+  - job_name: blackbox-dns
+    metrics_path: /probe
+    params:
+      module: [dns_pihole]
+    static_configs:
+      - targets: [10.10.10.10]
+        labels: {service: pihole}
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: blackbox:9115
+
+  - job_name: consul-exporter
+    static_configs:
+      - targets: [consul-exporter:9107]
+        labels: {instance_name: mgmt-obs-01}

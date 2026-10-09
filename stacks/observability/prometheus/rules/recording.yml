@@ -1,0 +1,33 @@
+groups:
+  - name: traefik
+    rules:
+      # Traefik names services "<name>@<provider>"; the bare name matches the blackbox `service` label.
+      - record: service:requests:rate5m
+        expr: label_replace(sum by (service) (rate(traefik_service_requests_total[5m])), "service", "$1", "service", "([^@]+)@.*")
+      - record: service:errors:rate5m
+        expr: label_replace(sum by (service) (rate(traefik_service_requests_total{code=~"5.."}[5m])), "service", "$1", "service", "([^@]+)@.*")
+      - record: service:error_ratio:rate5m
+        expr: service:errors:rate5m / service:requests:rate5m
+      - record: service:error_ratio:rate1h
+        expr: |
+          label_replace(
+            sum by (service) (rate(traefik_service_requests_total{code=~"5.."}[1h]))
+              / sum by (service) (rate(traefik_service_requests_total[1h])),
+            "service", "$1", "service", "([^@]+)@.*")
+      - record: service:latency_seconds:p50
+        expr: label_replace(histogram_quantile(0.50, sum by (service, le) (rate(traefik_service_request_duration_seconds_bucket[5m]))), "service", "$1", "service", "([^@]+)@.*")
+      - record: service:latency_seconds:p95
+        expr: label_replace(histogram_quantile(0.95, sum by (service, le) (rate(traefik_service_request_duration_seconds_bucket[5m]))), "service", "$1", "service", "([^@]+)@.*")
+      - record: service:latency_seconds:p99
+        expr: label_replace(histogram_quantile(0.99, sum by (service, le) (rate(traefik_service_request_duration_seconds_bucket[5m]))), "service", "$1", "service", "([^@]+)@.*")
+
+  - name: hosts
+    rules:
+      - record: instance:cpu_used:ratio
+        expr: 1 - avg by (instance_name) (rate(node_cpu_seconds_total{mode="idle"}[5m]))
+      - record: instance:memory_available:ratio
+        expr: node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes
+      - record: instance:swap_used:bytes
+        expr: node_memory_SwapTotal_bytes - node_memory_SwapFree_bytes
+      - record: instance:disk_used:ratio
+        expr: 1 - node_filesystem_avail_bytes{fstype!~"tmpfs|overlay|squashfs|ramfs"} / node_filesystem_size_bytes{fstype!~"tmpfs|overlay|squashfs|ramfs"}

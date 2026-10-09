@@ -1,0 +1,37 @@
+groups:
+  - name: pipeline
+    rules:
+      - alert: TargetDown
+        expr: up == 0
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Prometheus cannot scrape {{ $labels.job }} on {{ $labels.instance_name }}"
+          description: "The {{ $labels.job }} target at {{ $labels.instance }} has been down for 5 minutes."
+          runbook_url: https://outline.algebananazzzzz.com/collection/runbooks
+      - alert: FluentBitOutputErrors
+        expr: increase(fluentbit_output_errors_total[10m]) > 0 or increase(fluentbit_output_retries_failed_total[10m]) > 0
+        labels:
+          severity: warning
+        annotations:
+          summary: "Fluent Bit on {{ $labels.instance_name }} is failing to ship logs"
+          description: "Fluent Bit's {{ $labels.name }} output reported errors or gave up on retries in the last 10 minutes."
+          runbook_url: https://outline.algebananazzzzz.com/collection/runbooks
+      - alert: AlertmanagerNotificationsFailing
+        expr: increase(alertmanager_notifications_failed_total[10m]) > 0
+        labels:
+          severity: warning
+        annotations:
+          summary: "Alertmanager failed to deliver to {{ $labels.integration }}"
+          description: "Alertmanager could not deliver notifications through {{ $labels.integration }} in the last 10 minutes, so this alert may not reach you either."
+          runbook_url: https://outline.algebananazzzzz.com/collection/runbooks
+      # Always firing, so a receiver outside the homelab can page when it stops arriving.
+      - alert: Watchdog
+        expr: vector(1)
+        labels:
+          severity: none
+        annotations:
+          summary: "The alerting pipeline is running"
+          description: "This alert always fires."
+          runbook_url: https://outline.algebananazzzzz.com/collection/runbooks
