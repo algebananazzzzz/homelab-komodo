@@ -45,13 +45,8 @@ pages:
               - title: Windmill
                 url: https://${WINDMILL_HOSTNAME}
                 icon: di:windmill
-
-          - type: monitor
-            title: Management
-            cache: 30s
-            sites:
               - title: Authentik
-                url: https://${AUTH_HOSTNAME}
+                url: https://${AUTHENTIK_HOSTNAME}
                 icon: si:authentik
 
           - type: bookmarks

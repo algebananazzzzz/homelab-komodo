@@ -48,6 +48,9 @@ pages:
               - title: Windmill
                 url: https://${WINDMILL_HOSTNAME}
                 icon: di:windmill
+              - title: Authentik
+                url: https://${AUTHENTIK_HOSTNAME}
+                icon: si:authentik
               - title: Beaver Habits
                 url: https://beaverhabits.svc.home.arpa
                 icon: si:todoist
@@ -89,9 +92,6 @@ pages:
             title: Management
             cache: 30s
             sites:
-              - title: Authentik
-                url: https://sso.algebananazzzzz.com
-                icon: si:authentik
               - title: Pi-hole
                 url: https://pihole.ops.home.arpa/admin/
                 icon: si:pihole
