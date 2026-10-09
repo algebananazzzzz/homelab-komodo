@@ -1,0 +1,30 @@
+groups:
+  - name: logs
+    rules:
+      - alert: KernelOOMKill
+        expr: |
+          sum by (host) (count_over_time({host=~".+"} |= "Out of memory: Killed process" [5m])) > 0
+        labels:
+          severity: warning
+        annotations:
+          summary: "The kernel OOM killer ran on {{ $labels.host }}"
+          description: "{{ $labels.host }} ran out of memory and the kernel killed a process."
+          runbook_url: https://outline.algebananazzzzz.com/collection/runbooks
+      - alert: LoginFailureBurst
+        expr: |
+          sum(count_over_time({compose_project="authentik"} |= "login_failed" [5m])) > 10
+        labels:
+          severity: warning
+        annotations:
+          summary: "{{ $value }} failed Authentik logins in 5 minutes"
+          description: "More than 10 failed logins hit Authentik in 5 minutes."
+          runbook_url: https://outline.algebananazzzzz.com/collection/runbooks
+      - alert: ErrorLogSpike
+        expr: |
+          sum by (compose_project) (count_over_time({compose_project=~".+"} | detected_level=~"error|critical|fatal" [5m])) > 50
+        labels:
+          severity: info
+        annotations:
+          summary: "{{ $labels.compose_project }} logged {{ $value }} errors in 5 minutes"
+          description: "More than 50 error-level lines from {{ $labels.compose_project }} in 5 minutes."
+          runbook_url: https://outline.algebananazzzzz.com/collection/runbooks

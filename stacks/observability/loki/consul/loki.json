@@ -1,0 +1,7 @@
+{
+  "ID": "loki",
+  "Name": "loki",
+  "Port": 3100,
+  "Tags": ["prometheus.scrape=true", "prometheus.path=/metrics"],
+  "Check": {"HTTP": "http://127.0.0.1:3100/ready", "Interval": "10s", "Timeout": "5s"}
+}
