@@ -1,0 +1,110 @@
+# A separate flow, because Authentik re-applies its managed default flows on upgrade and would undo edits to them.
+version: 1
+metadata:
+  name: homelab-authentication
+entries:
+  - model: authentik_blueprints.metaapplyblueprint
+    attrs:
+      identifiers:
+        name: homelab-groups
+      required: true
+  - model: authentik_blueprints.metaapplyblueprint
+    attrs:
+      identifiers:
+        name: homelab-recovery
+      required: true
+
+  - model: authentik_flows.flow
+    id: flow
+    identifiers:
+      slug: homelab-authentication
+    attrs:
+      name: HomeLab login
+      title: Sign in to HomeLab
+      designation: authentication
+      authentication: none
+
+  - model: authentik_stages_identification.identificationstage
+    id: identification
+    identifiers:
+      name: homelab-authentication-identification
+    attrs:
+      user_fields: [username, email]
+      case_insensitive_matching: true
+      pretend_user_exists: true
+      password_stage: !Find [authentik_stages_password.passwordstage, [name, default-authentication-password]]
+      recovery_flow: !Find [authentik_flows.flow, [slug, homelab-recovery]]
+
+  - model: authentik_stages_authenticator_validate.authenticatorvalidatestage
+    id: mfa-admins
+    identifiers:
+      name: homelab-authentication-mfa-admins
+    attrs:
+      device_classes: [totp, webauthn, static]
+      not_configured_action: configure
+      configuration_stages:
+        - !Find [authentik_stages_authenticator_totp.authenticatortotpstage, [name, default-authenticator-totp-setup]]
+        - !Find [authentik_stages_authenticator_webauthn.authenticatorwebauthnstage, [name, default-authenticator-webauthn-setup]]
+
+  - model: authentik_stages_authenticator_validate.authenticatorvalidatestage
+    id: mfa-others
+    identifiers:
+      name: homelab-authentication-mfa-others
+    attrs:
+      device_classes: [totp, webauthn, static]
+      not_configured_action: skip
+
+  - model: authentik_flows.flowstagebinding
+    identifiers:
+      target: !KeyOf flow
+      stage: !KeyOf identification
+      order: 10
+
+  # The user is unknown when the flow is planned, so group checks must run when the stage is reached.
+  - model: authentik_flows.flowstagebinding
+    id: binding-mfa-admins
+    identifiers:
+      target: !KeyOf flow
+      stage: !KeyOf mfa-admins
+      order: 30
+    attrs:
+      evaluate_on_plan: false
+      re_evaluate_policies: true
+  - model: authentik_flows.flowstagebinding
+    id: binding-mfa-others
+    identifiers:
+      target: !KeyOf flow
+      stage: !KeyOf mfa-others
+      order: 31
+    attrs:
+      evaluate_on_plan: false
+      re_evaluate_policies: true
+
+  - model: authentik_policies.policybinding
+    identifiers:
+      target: !KeyOf binding-mfa-admins
+      group: !Find [authentik_core.group, [name, admins]]
+      order: 0
+    attrs:
+      negate: false
+  - model: authentik_policies.policybinding
+    identifiers:
+      target: !KeyOf binding-mfa-others
+      group: !Find [authentik_core.group, [name, admins]]
+      order: 0
+    attrs:
+      negate: true
+
+  - model: authentik_flows.flowstagebinding
+    identifiers:
+      target: !KeyOf flow
+      stage: !Find [authentik_stages_user_login.userloginstage, [name, default-authentication-login]]
+      order: 100
+
+  - model: authentik_brands.brand
+    identifiers:
+      domain: authentik-default
+    attrs:
+      branding_title: HomeLab
+      flow_authentication: !KeyOf flow
+      flow_recovery: !Find [authentik_flows.flow, [slug, homelab-recovery]]

@@ -1,0 +1,131 @@
+# Invitations cannot assign groups, so each role has its own flow and the invitation's flow decides the role.
+version: 1
+metadata:
+  name: homelab-enrollment
+entries:
+  - model: authentik_blueprints.metaapplyblueprint
+    attrs:
+      identifiers:
+        name: homelab-groups
+      required: true
+
+  - model: authentik_flows.flow
+    id: flow-member
+    identifiers:
+      slug: homelab-enrollment-member
+    attrs:
+      name: HomeLab member invitation
+      title: Create your account
+      designation: enrollment
+      authentication: require_unauthenticated
+  - model: authentik_flows.flow
+    id: flow-guest
+    identifiers:
+      slug: homelab-enrollment-guest
+    attrs:
+      name: HomeLab guest invitation
+      title: Create your account
+      designation: enrollment
+      authentication: require_unauthenticated
+
+  - model: authentik_stages_invitation.invitationstage
+    id: invitation
+    identifiers:
+      name: homelab-enrollment-invitation
+    attrs:
+      continue_flow_without_invitation: false
+
+  - model: authentik_stages_prompt.prompt
+    id: field-username
+    identifiers: {name: homelab-enrollment-field-username}
+    attrs: {field_key: username, label: Username, type: username, required: true, placeholder: Username, order: 0}
+  - model: authentik_stages_prompt.prompt
+    id: field-name
+    identifiers: {name: homelab-enrollment-field-name}
+    attrs: {field_key: name, label: Name, type: text, required: true, placeholder: Name, order: 1}
+  - model: authentik_stages_prompt.prompt
+    id: field-email
+    identifiers: {name: homelab-enrollment-field-email}
+    attrs: {field_key: email, label: Email, type: email, required: true, placeholder: Email, order: 2}
+  - model: authentik_stages_prompt.prompt
+    id: field-password
+    identifiers: {name: homelab-enrollment-field-password}
+    attrs: {field_key: password, label: Password, type: password, required: true, placeholder: Password, order: 3}
+  - model: authentik_stages_prompt.prompt
+    id: field-password-repeat
+    identifiers: {name: homelab-enrollment-field-password-repeat}
+    attrs: {field_key: password_repeat, label: Password (repeat), type: password, required: true, placeholder: Password (repeat), order: 4}
+  - model: authentik_stages_prompt.promptstage
+    id: prompt
+    identifiers:
+      name: homelab-enrollment-prompt
+    attrs:
+      fields:
+        - !KeyOf field-username
+        - !KeyOf field-name
+        - !KeyOf field-email
+        - !KeyOf field-password
+        - !KeyOf field-password-repeat
+
+  # Inactive until the email link is clicked, so a mistyped address cannot hold a working account.
+  - model: authentik_stages_user_write.userwritestage
+    id: write-member
+    identifiers:
+      name: homelab-enrollment-user-write-member
+    attrs:
+      user_creation_mode: always_create
+      create_users_as_inactive: true
+      create_users_group: !Find [authentik_core.group, [name, members]]
+      user_type: internal
+      user_path_template: users/members
+  - model: authentik_stages_user_write.userwritestage
+    id: write-guest
+    identifiers:
+      name: homelab-enrollment-user-write-guest
+    attrs:
+      user_creation_mode: always_create
+      create_users_as_inactive: true
+      create_users_group: !Find [authentik_core.group, [name, guests]]
+      user_type: internal
+      user_path_template: users/guests
+
+  - model: authentik_stages_email.emailstage
+    id: email
+    identifiers:
+      name: homelab-enrollment-email
+    attrs:
+      use_global_settings: true
+      token_expiry: hours=24
+      subject: Confirm your HomeLab account
+      template: email/account_confirmation.html
+      activate_user_on_success: true
+
+  - model: authentik_flows.flowstagebinding
+    identifiers: {target: !KeyOf flow-member, stage: !KeyOf invitation, order: 5}
+    attrs: {evaluate_on_plan: true, re_evaluate_policies: true}
+  - model: authentik_flows.flowstagebinding
+    identifiers: {target: !KeyOf flow-member, stage: !KeyOf prompt, order: 10}
+  - model: authentik_flows.flowstagebinding
+    identifiers: {target: !KeyOf flow-member, stage: !KeyOf write-member, order: 20}
+  - model: authentik_flows.flowstagebinding
+    identifiers: {target: !KeyOf flow-member, stage: !KeyOf email, order: 30}
+  - model: authentik_flows.flowstagebinding
+    identifiers:
+      target: !KeyOf flow-member
+      stage: !Find [authentik_stages_user_login.userloginstage, [name, default-authentication-login]]
+      order: 100
+
+  - model: authentik_flows.flowstagebinding
+    identifiers: {target: !KeyOf flow-guest, stage: !KeyOf invitation, order: 5}
+    attrs: {evaluate_on_plan: true, re_evaluate_policies: true}
+  - model: authentik_flows.flowstagebinding
+    identifiers: {target: !KeyOf flow-guest, stage: !KeyOf prompt, order: 10}
+  - model: authentik_flows.flowstagebinding
+    identifiers: {target: !KeyOf flow-guest, stage: !KeyOf write-guest, order: 20}
+  - model: authentik_flows.flowstagebinding
+    identifiers: {target: !KeyOf flow-guest, stage: !KeyOf email, order: 30}
+  - model: authentik_flows.flowstagebinding
+    identifiers:
+      target: !KeyOf flow-guest
+      stage: !Find [authentik_stages_user_login.userloginstage, [name, default-authentication-login]]
+      order: 100

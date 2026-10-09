@@ -1,0 +1,83 @@
+version: 1
+metadata:
+  name: homelab-recovery
+entries:
+  - model: authentik_flows.flow
+    id: flow
+    identifiers:
+      slug: homelab-recovery
+    attrs:
+      name: HomeLab recovery
+      title: Reset your password
+      designation: recovery
+      authentication: require_unauthenticated
+
+  - model: authentik_stages_identification.identificationstage
+    id: identification
+    identifiers:
+      name: homelab-recovery-identification
+    attrs:
+      user_fields: [email, username]
+      case_insensitive_matching: true
+      pretend_user_exists: true
+
+  - model: authentik_stages_email.emailstage
+    id: email
+    identifiers:
+      name: homelab-recovery-email
+    attrs:
+      use_global_settings: true
+      token_expiry: minutes=30
+      subject: Reset your HomeLab password
+      template: email/password_reset.html
+      activate_user_on_success: true
+
+  - model: authentik_stages_prompt.prompt
+    id: field-password
+    identifiers:
+      name: homelab-recovery-field-password
+    attrs:
+      field_key: password
+      label: New password
+      type: password
+      required: true
+      placeholder: New password
+      order: 0
+  - model: authentik_stages_prompt.prompt
+    id: field-password-repeat
+    identifiers:
+      name: homelab-recovery-field-password-repeat
+    attrs:
+      field_key: password_repeat
+      label: New password (repeat)
+      type: password
+      required: true
+      placeholder: New password (repeat)
+      order: 1
+  - model: authentik_stages_prompt.promptstage
+    id: prompt
+    identifiers:
+      name: homelab-recovery-password
+    attrs:
+      fields: [!KeyOf field-password, !KeyOf field-password-repeat]
+
+  - model: authentik_stages_user_write.userwritestage
+    id: write
+    identifiers:
+      name: homelab-recovery-user-write
+    attrs:
+      user_creation_mode: never_create
+
+  - model: authentik_flows.flowstagebinding
+    identifiers: {target: !KeyOf flow, stage: !KeyOf identification, order: 10}
+  - model: authentik_flows.flowstagebinding
+    identifiers: {target: !KeyOf flow, stage: !KeyOf email, order: 20}
+  - model: authentik_flows.flowstagebinding
+    identifiers: {target: !KeyOf flow, stage: !KeyOf prompt, order: 30}
+  - model: authentik_flows.flowstagebinding
+    identifiers: {target: !KeyOf flow, stage: !KeyOf write, order: 40}
+  - model: authentik_flows.flowstagebinding
+    identifiers:
+      target: !KeyOf flow
+      stage: !Find [authentik_stages_user_login.userloginstage, [name, default-authentication-login]]
+      order: 100

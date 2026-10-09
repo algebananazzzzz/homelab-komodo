@@ -1,0 +1,29 @@
+# Role groups say who a person is; grant groups give one application to one person regardless of role.
+version: 1
+metadata:
+  name: homelab-groups
+entries:
+  - model: authentik_core.group
+    identifiers: {name: admins}
+    attrs: {is_superuser: true}
+  - model: authentik_core.group
+    identifiers: {name: members}
+    attrs: {is_superuser: false}
+  - model: authentik_core.group
+    identifiers: {name: guests}
+    attrs: {is_superuser: false}
+  - model: authentik_core.group
+    identifiers: {name: app-komodo}
+    attrs: {is_superuser: false}
+  - model: authentik_core.group
+    identifiers: {name: app-windmill}
+    attrs: {is_superuser: false}
+  - model: authentik_core.group
+    identifiers: {name: app-outline}
+    attrs: {is_superuser: false}
+  - model: authentik_core.group
+    identifiers: {name: app-kaneo}
+    attrs: {is_superuser: false}
+  - model: authentik_core.group
+    identifiers: {name: app-corum}
+    attrs: {is_superuser: false}
