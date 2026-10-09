@@ -35,15 +35,16 @@ services:
       AUTHENTIK_POSTGRESQL__HOST: postgres.service.consul
       AUTHENTIK_POSTGRESQL__NAME: authentik
       AUTHENTIK_POSTGRESQL__USER: admin
-      AUTHENTIK_POSTGRESQL__PASSWORD: ${POSTGRES_PASSWORD:?}
-      AUTHENTIK_EMAIL__HOST: smtp.gmail.com
-      AUTHENTIK_EMAIL__PORT: "587"
+      AUTHENTIK_POSTGRESQL__PASSWORD: ${POSTGRES_ADMIN_PASSWORD:?}
+      AUTHENTIK_EMAIL__HOST: ${SMTP_HOST:?}
+      AUTHENTIK_EMAIL__PORT: ${SMTP_PORT:?}
       AUTHENTIK_EMAIL__USE_TLS: "true"
       AUTHENTIK_EMAIL__USERNAME: ${SMTP_USERNAME:?}
       AUTHENTIK_EMAIL__PASSWORD: ${SMTP_PASSWORD:?}
       AUTHENTIK_EMAIL__FROM: HomeLab <${SMTP_USERNAME:?}>
-      # Read only on the first start against an empty database, to set the akadmin password.
-      AUTHENTIK_BOOTSTRAP_PASSWORD: ${AUTHENTIK_BOOTSTRAP_PASSWORD:?}
+      # Read only on the first start against an empty database, to set up akadmin.
+      AUTHENTIK_BOOTSTRAP_EMAIL: ${ADMIN_EMAIL:?}
+      AUTHENTIK_BOOTSTRAP_PASSWORD: ${ADMIN_PASSWORD:?}
     ports:
       - "9000:9000/tcp"
     healthcheck:
