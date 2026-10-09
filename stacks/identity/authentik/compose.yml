@@ -1,0 +1,72 @@
+name: authentik
+
+x-authentik: &authentik
+  image: ghcr.io/goauthentik/server:2026.8.3
+  restart: unless-stopped
+  shm_size: 512mb
+  volumes:
+    - ./blueprints:/blueprints/custom:ro
+    - data:/data
+
+services:
+  register:
+    image: curlimages/curl:8.22.0
+    network_mode: host
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        set -e
+        for f in /consul/*.json; do
+          curl -sSf -X PUT --data-binary "@$$f" http://127.0.0.1:8500/v1/agent/service/register
+          echo "registered $$f"
+        done
+    volumes:
+      - ./consul:/consul:ro
+
+  server:
+    <<: *authentik
+    container_name: authentik
+    command: server
+    depends_on:
+      register:
+        condition: service_completed_successfully
+    environment: &env
+      AUTHENTIK_SECRET_KEY: ${AUTHENTIK_SECRET_KEY:?}
+      AUTHENTIK_POSTGRESQL__HOST: postgres.service.consul
+      AUTHENTIK_POSTGRESQL__NAME: authentik
+      AUTHENTIK_POSTGRESQL__USER: admin
+      AUTHENTIK_POSTGRESQL__PASSWORD: ${POSTGRES_PASSWORD:?}
+      AUTHENTIK_EMAIL__HOST: smtp.gmail.com
+      AUTHENTIK_EMAIL__PORT: "587"
+      AUTHENTIK_EMAIL__USE_TLS: "true"
+      AUTHENTIK_EMAIL__USERNAME: ${AUTHENTIK_EMAIL_USERNAME:?}
+      AUTHENTIK_EMAIL__PASSWORD: ${AUTHENTIK_EMAIL_PASSWORD:?}
+      AUTHENTIK_EMAIL__FROM: HomeLab <${AUTHENTIK_EMAIL_USERNAME:?}>
+      # Read only on the first start against an empty database, to set the akadmin password.
+      AUTHENTIK_BOOTSTRAP_PASSWORD: ${AUTHENTIK_BOOTSTRAP_PASSWORD:?}
+    ports:
+      - "9000:9000/tcp"
+    healthcheck:
+      test: ["CMD", "ak", "healthcheck"]
+      interval: 10s
+      timeout: 5s
+      retries: 60
+
+  worker:
+    <<: *authentik
+    container_name: authentik-worker
+    command: worker
+    depends_on:
+      server:
+        condition: service_healthy
+    environment:
+      <<: *env
+      # Blueprints read OIDC client secrets with !Env, and the worker applies blueprints.
+      OUTLINE_OIDC_CLIENT_SECRET: ${OUTLINE_OIDC_CLIENT_SECRET:?}
+      KANEO_OIDC_CLIENT_SECRET: ${KANEO_OIDC_CLIENT_SECRET:?}
+      KOMODO_OIDC_CLIENT_SECRET: ${KOMODO_OIDC_CLIENT_SECRET:?}
+      WINDMILL_OIDC_CLIENT_SECRET: ${WINDMILL_OIDC_CLIENT_SECRET:?}
+      CORUM_OIDC_CLIENT_SECRET: ${CORUM_OIDC_CLIENT_SECRET:?}
+
+volumes:
+  data:

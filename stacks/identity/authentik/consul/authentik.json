@@ -1,0 +1,13 @@
+{
+  "ID": "authentik",
+  "Name": "authentik",
+  "Port": 9000,
+  "Tags": [
+    "traefik.enable=true",
+    "traefik.http.routers.authentik.entrypoints=web,websecure",
+    "traefik.http.routers.authentik.rule=Host(`sso.algebananazzzzz.com`)",
+    "traefik.http.routers.authentik.tls=true",
+    "traefik.http.services.authentik.loadbalancer.server.port=9000"
+  ],
+  "Check": {"HTTP": "http://127.0.0.1:9000/-/health/live/", "Interval": "10s", "Timeout": "5s"}
+}
