@@ -57,5 +57,5 @@ WINDMILL_OIDC_CLIENT_SECRET='[[WINDMILL_OIDC_CLIENT_SECRET]]'
 CORUM_OIDC_CLIENT_SECRET='[[CORUM_OIDC_CLIENT_SECRET]]'
 """
 # Blueprints are re-read on restart, and Compose does not see a bind-mounted file change, so every deploy recreates.
-config_files = ["consul/authentik.json", "blueprints/10-groups.yaml", "blueprints/20-authentication.yaml", "blueprints/30-recovery.yaml", "blueprints/40-enrollment.yaml"]
+config_files = ["consul/authentik.json", "blueprints/10-groups.yaml", "blueprints/20-authentication.yaml", "blueprints/30-recovery.yaml", "blueprints/40-enrollment.yaml", "blueprints/50-applications.yaml"]
 extra_args = ["--force-recreate"]
