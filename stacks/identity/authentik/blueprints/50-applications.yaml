@@ -25,6 +25,8 @@ entries:
       signing_key: !Context signing_key
       property_mappings: [!Context scope_openid, !Context scope_email, !Context scope_profile]
       client_type: confidential
+      # Blueprint-created providers start with no grant types, which rejects every login.
+      grant_types: [authorization_code, refresh_token]
       client_id: outline
       client_secret: !Env OUTLINE_OIDC_CLIENT_SECRET
       sub_mode: hashed_user_id
