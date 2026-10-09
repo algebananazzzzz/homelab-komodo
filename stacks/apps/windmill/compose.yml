@@ -47,7 +47,7 @@ services:
     environment:
       MODE: server
       DATABASE_URL: postgres://admin:${POSTGRES_PASSWORD:?}@postgres.service.consul:5432/windmill?sslmode=disable
-      # Accounts made by the first Authelia login are not superadmins, and homelab-windmill's CI creates the workspace with one.
+      # Accounts made by the first SSO login are not superadmins, and homelab-windmill's CI creates the workspace with one.
       CREATE_WORKSPACE_REQUIRE_SUPERADMIN: "false"
     healthcheck:
       test: ["CMD", "curl", "-fsS", "-o", "/dev/null", "http://127.0.0.1:8000/api/version"]

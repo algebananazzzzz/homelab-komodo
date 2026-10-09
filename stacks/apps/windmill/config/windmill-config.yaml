@@ -3,26 +3,26 @@
 global_settings:
   base_url: https://windmill.algebananazzzzz.com
   disable_password_login: true
-  # The first Authelia login creates the account, so a rebuilt instance needs no user setup.
+  # The first SSO login creates the account, so a rebuilt instance needs no user setup.
   require_preexisting_user_for_oauth: false
   automate_username_creation: true
   custom_tags:
     - chromium
   oauths:
-    authelia:
+    authentik:
       id: windmill
       secret:
         envRef: WINDMILL_OIDC_CLIENT_SECRET
-      display_name: Authelia
+      display_name: HomeLab SSO
       login_config:
-        scopes: [openid, profile, email, groups]
-        auth_url: https://auth.algebananazzzzz.com/api/oidc/authorization
-        token_url: https://auth.algebananazzzzz.com/api/oidc/token
-        userinfo_url: https://auth.algebananazzzzz.com/api/oidc/userinfo
+        scopes: [openid, profile, email]
+        auth_url: https://sso.algebananazzzzz.com/application/o/authorize/
+        token_url: https://sso.algebananazzzzz.com/application/o/token/
+        userinfo_url: https://sso.algebananazzzzz.com/application/o/userinfo/
       connect_config:
-        scopes: [openid, profile, email, groups]
-        auth_url: https://auth.algebananazzzzz.com/api/oidc/authorization
-        token_url: https://auth.algebananazzzzz.com/api/oidc/token
+        scopes: [openid, profile, email]
+        auth_url: https://sso.algebananazzzzz.com/application/o/authorize/
+        token_url: https://sso.algebananazzzzz.com/application/o/token/
 
 worker_configs:
   default:
