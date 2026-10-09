@@ -16,7 +16,7 @@ executions = [
   { execution.type = "RunSync", execution.params.sync = "homelab-komodo" },
 ]
 
-# Run after a rebuild: apps need the databases and Authelia up before they start.
+# Run after a rebuild: apps need the databases and Authentik up before they start.
 [[procedure]]
 name = "cold-start"
 description = "Deploy every app stack in dependency order."
@@ -32,7 +32,7 @@ executions = [
 [[procedure.config.stage]]
 name = "Identity"
 executions = [
-  { execution.type = "DeployStack", execution.params.stack = "authelia", execution.params.services = [] },
+  { execution.type = "DeployStack", execution.params.stack = "authentik", execution.params.services = [] },
 ]
 
 [[procedure.config.stage]]

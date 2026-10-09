@@ -50,9 +50,9 @@ pages:
             title: Management
             cache: 30s
             sites:
-              - title: Authelia
+              - title: Authentik
                 url: https://${AUTH_HOSTNAME}
-                icon: si:authelia
+                icon: si:authentik
 
           - type: bookmarks
             title: Internal

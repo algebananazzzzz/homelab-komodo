@@ -89,9 +89,9 @@ pages:
             title: Management
             cache: 30s
             sites:
-              - title: Authelia
-                url: https://auth.home.arpa
-                icon: si:authelia
+              - title: Authentik
+                url: https://sso.algebananazzzzz.com
+                icon: si:authentik
               - title: Pi-hole
                 url: https://pihole.ops.home.arpa/admin/
                 icon: si:pihole

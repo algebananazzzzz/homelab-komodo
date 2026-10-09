@@ -10,7 +10,7 @@ x-glance: &glance
     KANEO_HOSTNAME: kaneo.algebananazzzzz.com
     OUTLINE_HOSTNAME: outline.algebananazzzzz.com
     WINDMILL_HOSTNAME: windmill.algebananazzzzz.com
-    AUTH_HOSTNAME: auth.algebananazzzzz.com
+    AUTH_HOSTNAME: sso.algebananazzzzz.com
   volumes:
     - ./config:/app/config:ro
     - /etc/ssl/certs/ca-certificates.crt:/etc/ssl/certs/ca-certificates.crt:ro
