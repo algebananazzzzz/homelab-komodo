@@ -8,6 +8,11 @@ entries:
       identifiers:
         name: homelab-groups
       required: true
+  - model: authentik_blueprints.metaapplyblueprint
+    attrs:
+      identifiers:
+        name: homelab-recovery
+      required: true
 
   - model: authentik_flows.flow
     id: flow-member
@@ -110,10 +115,13 @@ entries:
   - model: authentik_flows.flowstagebinding
     identifiers: {target: !KeyOf flow-member, stage: !KeyOf email, order: 30}
   - model: authentik_flows.flowstagebinding
+    id: login-member
     identifiers:
       target: !KeyOf flow-member
       stage: !Find [authentik_stages_user_login.userloginstage, [name, default-authentication-login]]
       order: 100
+  - model: authentik_policies.policybinding
+    identifiers: {target: !KeyOf login-member, policy: !Find [authentik_policies_expression.expressionpolicy, [name, homelab-mark-email-verified]], order: 0}
 
   - model: authentik_flows.flowstagebinding
     identifiers: {target: !KeyOf flow-guest, stage: !KeyOf invitation, order: 5}
@@ -125,7 +133,10 @@ entries:
   - model: authentik_flows.flowstagebinding
     identifiers: {target: !KeyOf flow-guest, stage: !KeyOf email, order: 30}
   - model: authentik_flows.flowstagebinding
+    id: login-guest
     identifiers:
       target: !KeyOf flow-guest
       stage: !Find [authentik_stages_user_login.userloginstage, [name, default-authentication-login]]
       order: 100
+  - model: authentik_policies.policybinding
+    identifiers: {target: !KeyOf login-guest, policy: !Find [authentik_policies_expression.expressionpolicy, [name, homelab-mark-email-verified]], order: 0}

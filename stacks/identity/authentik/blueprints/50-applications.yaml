@@ -6,7 +6,6 @@ context:
   invalidation_flow: !Find [authentik_flows.flow, [slug, default-provider-invalidation-flow]]
   signing_key: !Find [authentik_crypto.certificatekeypair, [name, authentik Self-signed Certificate]]
   scope_openid: !Find [authentik_providers_oauth2.scopemapping, [managed, goauthentik.io/providers/oauth2/scope-openid]]
-  scope_email: !Find [authentik_providers_oauth2.scopemapping, [managed, goauthentik.io/providers/oauth2/scope-email]]
   scope_profile: !Find [authentik_providers_oauth2.scopemapping, [managed, goauthentik.io/providers/oauth2/scope-profile]]
 entries:
   - model: authentik_blueprints.metaapplyblueprint
@@ -14,6 +13,19 @@ entries:
       identifiers:
         name: homelab-groups
       required: true
+
+  # The managed email mapping always sends email_verified false, which Outline rejects.
+  - model: authentik_providers_oauth2.scopemapping
+    id: scope-email
+    identifiers: {name: "HomeLab OAuth Mapping: OpenID 'email'"}
+    attrs:
+      scope_name: email
+      description: Email address
+      expression: |
+        return {
+            "email": request.user.email,
+            "email_verified": request.user.attributes.get("verified_email") == request.user.email,
+        }
 
   # Outline
   - model: authentik_providers_oauth2.oauth2provider
@@ -23,7 +35,7 @@ entries:
       authorization_flow: !Context authorization_flow
       invalidation_flow: !Context invalidation_flow
       signing_key: !Context signing_key
-      property_mappings: [!Context scope_openid, !Context scope_email, !Context scope_profile]
+      property_mappings: [!Context scope_openid, !KeyOf scope-email, !Context scope_profile]
       client_type: confidential
       # Blueprint-created providers start with no grant types, which rejects every login.
       grant_types: [authorization_code, refresh_token]

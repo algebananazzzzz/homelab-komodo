@@ -76,8 +76,22 @@ entries:
     identifiers: {target: !KeyOf flow, stage: !KeyOf prompt, order: 30}
   - model: authentik_flows.flowstagebinding
     identifiers: {target: !KeyOf flow, stage: !KeyOf write, order: 40}
+
+  # Authentik has no verified-email field; bound after the email stage, this records the confirmed address.
+  - model: authentik_policies_expression.expressionpolicy
+    id: mark-email-verified
+    identifiers: {name: homelab-mark-email-verified}
+    attrs:
+      expression: |
+        request.user.attributes["verified_email"] = request.user.email
+        request.user.save(update_fields=["attributes"])
+        return True
+
   - model: authentik_flows.flowstagebinding
+    id: login
     identifiers:
       target: !KeyOf flow
       stage: !Find [authentik_stages_user_login.userloginstage, [name, default-authentication-login]]
       order: 100
+  - model: authentik_policies.policybinding
+    identifiers: {target: !KeyOf login, policy: !KeyOf mark-email-verified, order: 0}
