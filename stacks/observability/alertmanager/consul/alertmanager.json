@@ -1,0 +1,15 @@
+{
+  "ID": "alertmanager",
+  "Name": "alertmanager",
+  "Port": 9093,
+  "Tags": [
+    "traefik.enable=true",
+    "traefik.http.routers.alertmanager.entrypoints=web,websecure",
+    "traefik.http.routers.alertmanager.rule=Host(`alertmanager.ops.home.arpa`)",
+    "traefik.http.routers.alertmanager.tls=true",
+    "traefik.http.services.alertmanager.loadbalancer.server.port=9093",
+    "prometheus.scrape=true",
+    "prometheus.path=/metrics"
+  ],
+  "Check": {"HTTP": "http://127.0.0.1:9093/-/healthy", "Interval": "10s", "Timeout": "5s"}
+}

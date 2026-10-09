@@ -26,6 +26,7 @@ tags = ["komodo"]
 name = "Observability"
 executions = [
   { execution.type = "DeployStack", execution.params.stack = "prometheus", execution.params.services = [] },
+  { execution.type = "DeployStack", execution.params.stack = "alertmanager", execution.params.services = [] },
 ]
 
 [[procedure.config.stage]]

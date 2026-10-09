@@ -1,0 +1,42 @@
+route:
+  receiver: ntfy-warning
+  group_by: [alertname, instance_name, job]
+  group_wait: 30s
+  group_interval: 5m
+  repeat_interval: 24h
+  routes:
+    - matchers: ['alertname="Watchdog"']
+      receiver: "null"
+    - matchers: ['severity="info"']
+      receiver: "null"
+    - matchers: ['severity="critical"']
+      receiver: ntfy-critical
+      repeat_interval: 4h
+
+# Posts straight to ntfy on svc-apps-01 rather than through Traefik, so alerts still arrive when Traefik is the problem.
+receivers:
+  - name: "null"
+  - name: ntfy-critical
+    webhook_configs:
+      - url: http://10.10.20.30:8092/homelab-alerts?template=alertmanager&priority=5
+        send_resolved: true
+        http_config:
+          authorization:
+            type: Bearer
+            credentials_file: /tmp/ntfy-token
+  - name: ntfy-warning
+    webhook_configs:
+      - url: http://10.10.20.30:8092/homelab-alerts?template=alertmanager&priority=3
+        send_resolved: true
+        http_config:
+          authorization:
+            type: Bearer
+            credentials_file: /tmp/ntfy-token
+
+inhibit_rules:
+  - source_matchers: ['alertname="HostDown"']
+    target_matchers: ['alertname!="HostDown"']
+    equal: [instance_name]
+  - source_matchers: ['alertname="ServiceDown"']
+    target_matchers: ['alertname=~"HighErrorRate|ElevatedErrorRate|SlowResponses"']
+    equal: [service]

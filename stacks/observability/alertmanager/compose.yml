@@ -1,0 +1,41 @@
+name: alertmanager
+
+services:
+  register:
+    image: curlimages/curl:8.22.0
+    network_mode: host
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        set -e
+        for f in /consul/*.json; do
+          curl -sSf -X PUT --data-binary "@$$f" http://127.0.0.1:8500/v1/agent/service/register
+          echo "registered $$f"
+        done
+    volumes:
+      - ./consul:/consul:ro
+
+  alertmanager:
+    container_name: alertmanager
+    image: prom/alertmanager:v0.34.1
+    depends_on:
+      register:
+        condition: service_completed_successfully
+    # Alertmanager does not expand environment variables in its config, so the token reaches it as a file.
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        printf '%s' "$$NTFY_TOKEN" > /tmp/ntfy-token
+        exec /bin/alertmanager --config.file=/etc/alertmanager/alertmanager.yml --storage.path=/alertmanager --web.external-url=https://alertmanager.ops.home.arpa --cluster.listen-address=
+    environment:
+      NTFY_TOKEN: ${NTFY_TOKEN:?}
+    ports:
+      - "9093:9093/tcp"
+    volumes:
+      - ./config/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
+      - data:/alertmanager
+    restart: unless-stopped
+
+volumes:
+  data:
+    name: homelab-alertmanager-data

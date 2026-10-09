@@ -75,6 +75,7 @@ environment = """
 ADMIN_USERNAME='[[ADMIN_USERNAME]]'
 ADMIN_PASSWORD_BCRYPT='[[ADMIN_PASSWORD_BCRYPT]]'
 NTFY_KANEO_TOKEN='[[NTFY_KANEO_TOKEN]]'
+NTFY_ALERTMANAGER_TOKEN='[[NTFY_ALERTMANAGER_TOKEN]]'
 """
 # A sync redeploys a stack only when a listed file changes, so every file the stack reads is listed.
 config_files = ["consul/ntfy.json"]

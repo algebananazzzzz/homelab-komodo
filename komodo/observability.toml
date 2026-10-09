@@ -14,3 +14,24 @@ ignore_services = ["register"]
 # Compose does not see bind-mounted config change, so a config edit must recreate the containers to take effect.
 config_files = ["config/prometheus.yml", "config/blackbox.yml", "consul/prometheus.json", "rules/recording.yml", "rules/symptoms.yml", "rules/hosts.yml", "rules/containers.yml", "rules/dependencies.yml", "rules/pipeline.yml"]
 extra_args = ["--force-recreate"]
+
+[[stack]]
+name = "alertmanager"
+description = "Routes alerts to ntfy, at alertmanager.ops.home.arpa."
+tags = ["observability"]
+deploy = true
+
+[stack.config]
+server = "mgmt-obs-01"
+repo = "algebananazzzzz/homelab-komodo"
+branch = "main"
+run_directory = "stacks/observability/alertmanager"
+file_paths = ["compose.yml"]
+ignore_services = ["register"]
+# Single quotes keep Compose from expanding a `$` inside a value.
+environment = """
+NTFY_TOKEN='[[NTFY_ALERTMANAGER_TOKEN]]'
+"""
+# Compose does not see bind-mounted config change, so a config edit must recreate the containers to take effect.
+config_files = ["config/alertmanager.yml", "consul/alertmanager.json"]
+extra_args = ["--force-recreate"]
