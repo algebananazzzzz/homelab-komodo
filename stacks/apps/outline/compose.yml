@@ -35,9 +35,9 @@ services:
       FILE_STORAGE: local
       FILE_STORAGE_LOCAL_ROOT_DIR: /var/lib/outline/data
       OIDC_CLIENT_ID: outline
-      OIDC_AUTH_URI: https://auth.algebananazzzzz.com/api/oidc/authorization
-      OIDC_TOKEN_URI: https://auth.algebananazzzzz.com/api/oidc/token
-      OIDC_USERINFO_URI: https://auth.algebananazzzzz.com/api/oidc/userinfo
+      OIDC_AUTH_URI: https://sso.algebananazzzzz.com/application/o/authorize/
+      OIDC_TOKEN_URI: https://sso.algebananazzzzz.com/application/o/token/
+      OIDC_USERINFO_URI: https://sso.algebananazzzzz.com/application/o/userinfo/
       OIDC_DISPLAY_NAME: HomeLab SSO
       OIDC_SCOPES: openid profile email
       NODE_EXTRA_CA_CERTS: /etc/ssl/certs/ca-certificates.crt
