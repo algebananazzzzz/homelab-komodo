@@ -1,0 +1,10 @@
+apiVersion: 1
+
+# UI edits are allowed but only persist once the JSON is exported back into this repo.
+providers:
+  - name: homelab
+    folder: Homelab
+    type: file
+    allowUiUpdates: true
+    options:
+      path: /var/lib/grafana-dashboards

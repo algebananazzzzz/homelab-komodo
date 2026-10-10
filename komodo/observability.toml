@@ -69,3 +69,25 @@ ignore_services = ["register"]
 # Compose does not see bind-mounted config change, so a config edit must recreate the containers to take effect.
 config_files = ["config/tempo.yml", "consul/tempo.json"]
 extra_args = ["--force-recreate"]
+
+[[stack]]
+name = "grafana"
+description = "Dashboards and Explore at grafana.ops.home.arpa."
+tags = ["observability"]
+deploy = true
+
+[stack.config]
+server = "mgmt-obs-01"
+repo = "algebananazzzzz/homelab-komodo"
+branch = "main"
+run_directory = "stacks/observability/grafana"
+file_paths = ["compose.yml"]
+ignore_services = ["register"]
+# Single quotes keep Compose from expanding a `$` inside a value.
+environment = """
+GRAFANA_ADMIN_PASSWORD='[[GRAFANA_ADMIN_PASSWORD]]'
+GRAFANA_OIDC_CLIENT_SECRET='[[GRAFANA_OIDC_CLIENT_SECRET]]'
+"""
+# Compose does not see bind-mounted config change, so a config edit must recreate the containers to take effect.
+config_files = ["consul/grafana.json", "provisioning/datasources/datasources.yml", "provisioning/dashboards/dashboards.yml", "dashboards/overview.json", "dashboards/logs.json", "dashboards/pipeline.json", "dashboards/node-exporter-full.json", "dashboards/cadvisor.json", "dashboards/postgres.json", "dashboards/redis.json"]
+extra_args = ["--force-recreate"]

@@ -1,0 +1,15 @@
+{
+  "ID": "grafana",
+  "Name": "grafana",
+  "Port": 3000,
+  "Tags": [
+    "traefik.enable=true",
+    "traefik.http.routers.grafana.entrypoints=web,websecure",
+    "traefik.http.routers.grafana.rule=Host(`grafana.ops.home.arpa`)",
+    "traefik.http.routers.grafana.tls=true",
+    "traefik.http.services.grafana.loadbalancer.server.port=3000",
+    "prometheus.scrape=true",
+    "prometheus.path=/metrics"
+  ],
+  "Check": {"HTTP": "http://127.0.0.1:3000/api/health", "Interval": "10s", "Timeout": "5s"}
+}

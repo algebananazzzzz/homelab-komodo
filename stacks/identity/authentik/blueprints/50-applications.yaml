@@ -139,3 +139,20 @@ entries:
     identifiers: {target: !KeyOf corum-app, group: !Find [authentik_core.group, [name, members]], order: 2}
   - model: authentik_policies.policybinding
     identifiers: {target: !KeyOf corum-app, group: !Find [authentik_core.group, [name, guests]], order: 3}
+
+  # Grafana
+  - model: authentik_providers_oauth2.oauth2provider
+    id: grafana-provider
+    identifiers: {name: Grafana}
+    attrs:
+      <<: *provider
+      client_id: grafana
+      client_secret: !Env GRAFANA_OIDC_CLIENT_SECRET
+      redirect_uris:
+        - {matching_mode: strict, url: "https://grafana.ops.home.arpa/login/generic_oauth"}
+  - model: authentik_core.application
+    id: grafana-app
+    identifiers: {slug: grafana}
+    attrs: {name: Grafana, provider: !KeyOf grafana-provider, meta_launch_url: "https://grafana.ops.home.arpa", policy_engine_mode: any}
+  - model: authentik_policies.policybinding
+    identifiers: {target: !KeyOf grafana-app, group: !Find [authentik_core.group, [name, admins]], order: 0}

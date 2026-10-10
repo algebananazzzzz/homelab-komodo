@@ -29,6 +29,7 @@ executions = [
   { execution.type = "DeployStack", execution.params.stack = "alertmanager", execution.params.services = [] },
   { execution.type = "DeployStack", execution.params.stack = "loki", execution.params.services = [] },
   { execution.type = "DeployStack", execution.params.stack = "tempo", execution.params.services = [] },
+  { execution.type = "DeployStack", execution.params.stack = "grafana", execution.params.services = [] },
 ]
 
 [[procedure.config.stage]]

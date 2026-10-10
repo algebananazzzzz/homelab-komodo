@@ -1,0 +1,52 @@
+name: grafana
+
+services:
+  register:
+    image: curlimages/curl:8.22.0
+    network_mode: host
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        set -e
+        for f in /consul/*.json; do
+          curl -sSf -X PUT --data-binary "@$$f" http://127.0.0.1:8500/v1/agent/service/register
+          echo "registered $$f"
+        done
+    volumes:
+      - ./consul:/consul:ro
+
+  grafana:
+    container_name: grafana
+    image: grafana/grafana:13.2.3
+    depends_on:
+      register:
+        condition: service_completed_successfully
+    environment:
+      GF_SERVER_ROOT_URL: https://grafana.ops.home.arpa
+      # The break-glass login for when Authentik is down.
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:?}
+      GF_AUTH_GENERIC_OAUTH_ENABLED: "true"
+      GF_AUTH_GENERIC_OAUTH_NAME: HomeLab SSO
+      GF_AUTH_GENERIC_OAUTH_CLIENT_ID: grafana
+      GF_AUTH_GENERIC_OAUTH_CLIENT_SECRET: ${GRAFANA_OIDC_CLIENT_SECRET:?}
+      GF_AUTH_GENERIC_OAUTH_SCOPES: openid profile email
+      GF_AUTH_GENERIC_OAUTH_AUTH_URL: https://sso.algebananazzzzz.com/application/o/authorize/
+      GF_AUTH_GENERIC_OAUTH_TOKEN_URL: https://sso.algebananazzzzz.com/application/o/token/
+      GF_AUTH_GENERIC_OAUTH_API_URL: https://sso.algebananazzzzz.com/application/o/userinfo/
+      GF_AUTH_GENERIC_OAUTH_ROLE_ATTRIBUTE_PATH: contains(groups[*], 'admins') && 'Admin' || 'Viewer'
+      GF_AUTH_SIGNOUT_REDIRECT_URL: https://sso.algebananazzzzz.com/application/o/grafana/end-session/
+      GF_ANALYTICS_REPORTING_ENABLED: "false"
+    ports:
+      - "3000:3000/tcp"
+    volumes:
+      - ./provisioning:/etc/grafana/provisioning:ro
+      - ./dashboards:/var/lib/grafana-dashboards:ro
+      - data:/var/lib/grafana
+      # Ansible's internal_ca role adds the homelab CA to the host bundle, which Grafana needs to reach Authentik.
+      - /etc/ssl/certs/ca-certificates.crt:/etc/ssl/certs/ca-certificates.crt:ro
+    restart: unless-stopped
+
+volumes:
+  data:
+    name: homelab-grafana-data
