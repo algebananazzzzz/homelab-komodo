@@ -49,27 +49,34 @@ tests:
           - exp_labels: {severity: warning, service: outline}
             exp_annotations:
               summary: "outline failed 10% of requests over the last hour"
-              description: "More than 1% of requests to outline returned 5xx, averaged over 1 hour."
+              description: "More than 1% of requests to outline, and at least 25 of them, returned 5xx over the last hour."
               runbook_url: https://outline.algebananazzzzz.com/collection/runbooks
 
   # outline: every request takes 2.5-5s; kaneo: every request is under 0.1s.
   - interval: 15s
     input_series:
-      - series: 'traefik_service_request_duration_seconds_bucket{service="outline@consulcatalog",le="0.1"}'
+      - series: 'traefik_service_request_duration_seconds_bucket{service="outline@consulcatalog",protocol="http",le="0.1"}'
         values: '0x60'
-      - series: 'traefik_service_request_duration_seconds_bucket{service="outline@consulcatalog",le="2.5"}'
+      - series: 'traefik_service_request_duration_seconds_bucket{service="outline@consulcatalog",protocol="http",le="2.5"}'
         values: '0x60'
-      - series: 'traefik_service_request_duration_seconds_bucket{service="outline@consulcatalog",le="5"}'
+      - series: 'traefik_service_request_duration_seconds_bucket{service="outline@consulcatalog",protocol="http",le="5"}'
         values: '0+10x60'
-      - series: 'traefik_service_request_duration_seconds_bucket{service="outline@consulcatalog",le="+Inf"}'
+      - series: 'traefik_service_request_duration_seconds_bucket{service="outline@consulcatalog",protocol="http",le="+Inf"}'
         values: '0+10x60'
-      - series: 'traefik_service_request_duration_seconds_bucket{service="kaneo@consulcatalog",le="0.1"}'
+      - series: 'traefik_service_request_duration_seconds_bucket{service="kaneo@consulcatalog",protocol="http",le="0.1"}'
         values: '0+10x60'
-      - series: 'traefik_service_request_duration_seconds_bucket{service="kaneo@consulcatalog",le="2.5"}'
+      - series: 'traefik_service_request_duration_seconds_bucket{service="kaneo@consulcatalog",protocol="http",le="2.5"}'
         values: '0+10x60'
-      - series: 'traefik_service_request_duration_seconds_bucket{service="kaneo@consulcatalog",le="5"}'
+      - series: 'traefik_service_request_duration_seconds_bucket{service="kaneo@consulcatalog",protocol="http",le="5"}'
         values: '0+10x60'
-      - series: 'traefik_service_request_duration_seconds_bucket{service="kaneo@consulcatalog",le="+Inf"}'
+      - series: 'traefik_service_request_duration_seconds_bucket{service="kaneo@consulcatalog",protocol="http",le="+Inf"}'
+        values: '0+10x60'
+      # ntfy's phone connections are websockets that stay open; their lifetime is not latency.
+      - series: 'traefik_service_request_duration_seconds_bucket{service="ntfy@consulcatalog",protocol="websocket",le="2.5"}'
+        values: '0x60'
+      - series: 'traefik_service_request_duration_seconds_bucket{service="ntfy@consulcatalog",protocol="websocket",le="5"}'
+        values: '0x60'
+      - series: 'traefik_service_request_duration_seconds_bucket{service="ntfy@consulcatalog",protocol="websocket",le="+Inf"}'
         values: '0+10x60'
     alert_rule_test:
       - eval_time: 8m
@@ -83,3 +90,21 @@ tests:
               summary: "outline p95 latency is 4.875s"
               description: "95th percentile latency for outline has stayed above 2s for 10 minutes."
               runbook_url: https://outline.algebananazzzzz.com/collection/runbooks
+
+  # A redeploy: authentik answers 15 502s within one minute at low traffic, then recovers.
+  - interval: 15s
+    input_series:
+      - series: 'traefik_service_requests_total{service="authentik@consulcatalog",code="200"}'
+        values: '0+4x240'
+      - series: 'traefik_service_requests_total{service="authentik@consulcatalog",code="502"}'
+        values: '0x20 4 8 12 15x236'
+    alert_rule_test:
+      - eval_time: 9m
+        alertname: HighErrorRate
+        exp_alerts: []
+      - eval_time: 12m
+        alertname: HighErrorRate
+        exp_alerts: []
+      - eval_time: 40m
+        alertname: ElevatedErrorRate
+        exp_alerts: []

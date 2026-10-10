@@ -14,12 +14,15 @@ groups:
             sum by (service) (rate(traefik_service_requests_total{code=~"5.."}[1h]))
               / sum by (service) (rate(traefik_service_requests_total[1h])),
             "service", "$1", "service", "([^@]+)@.*")
+      - record: service:errors:increase1h
+        expr: label_replace(sum by (service) (increase(traefik_service_requests_total{code=~"5.."}[1h])), "service", "$1", "service", "([^@]+)@.*")
+      # Websocket and SSE durations are connection lifetimes, not response times.
       - record: service:latency_seconds:p50
-        expr: label_replace(histogram_quantile(0.50, sum by (service, le) (rate(traefik_service_request_duration_seconds_bucket[5m]))), "service", "$1", "service", "([^@]+)@.*")
+        expr: label_replace(histogram_quantile(0.50, sum by (service, le) (rate(traefik_service_request_duration_seconds_bucket{protocol="http"}[5m]))), "service", "$1", "service", "([^@]+)@.*")
       - record: service:latency_seconds:p95
-        expr: label_replace(histogram_quantile(0.95, sum by (service, le) (rate(traefik_service_request_duration_seconds_bucket[5m]))), "service", "$1", "service", "([^@]+)@.*")
+        expr: label_replace(histogram_quantile(0.95, sum by (service, le) (rate(traefik_service_request_duration_seconds_bucket{protocol="http"}[5m]))), "service", "$1", "service", "([^@]+)@.*")
       - record: service:latency_seconds:p99
-        expr: label_replace(histogram_quantile(0.99, sum by (service, le) (rate(traefik_service_request_duration_seconds_bucket[5m]))), "service", "$1", "service", "([^@]+)@.*")
+        expr: label_replace(histogram_quantile(0.99, sum by (service, le) (rate(traefik_service_request_duration_seconds_bucket{protocol="http"}[5m]))), "service", "$1", "service", "([^@]+)@.*")
 
   - name: hosts
     rules:

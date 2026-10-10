@@ -20,13 +20,14 @@ groups:
           description: "More than 5% of requests to {{ $labels.service }} through Traefik have returned 5xx for 5 minutes."
           runbook_url: https://outline.algebananazzzzz.com/collection/runbooks
       - alert: ElevatedErrorRate
-        expr: service:error_ratio:rate1h > 0.01
+        # Probes make up most traffic, so a redeploy's few 502s alone would cross 1%.
+        expr: service:error_ratio:rate1h > 0.01 and service:errors:increase1h >= 25
         for: 5m
         labels:
           severity: warning
         annotations:
           summary: "{{ $labels.service }} failed {{ $value | humanizePercentage }} of requests over the last hour"
-          description: "More than 1% of requests to {{ $labels.service }} returned 5xx, averaged over 1 hour."
+          description: "More than 1% of requests to {{ $labels.service }}, and at least 25 of them, returned 5xx over the last hour."
           runbook_url: https://outline.algebananazzzzz.com/collection/runbooks
       - alert: SlowResponses
         expr: service:latency_seconds:p95 > 2
