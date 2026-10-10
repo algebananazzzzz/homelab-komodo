@@ -140,19 +140,10 @@ entries:
   - model: authentik_policies.policybinding
     identifiers: {target: !KeyOf corum-app, group: !Find [authentik_core.group, [name, guests]], order: 3}
 
-  # Grafana
-  - model: authentik_providers_oauth2.oauth2provider
-    id: grafana-provider
-    identifiers: {name: Grafana}
-    attrs:
-      <<: *provider
-      client_id: grafana
-      client_secret: !Env GRAFANA_OIDC_CLIENT_SECRET
-      redirect_uris:
-        - {matching_mode: strict, url: "https://grafana.ops.home.arpa/login/generic_oauth"}
+  # Grafana signs everyone in anonymously; removing entries leaves objects behind, so these delete its old client.
   - model: authentik_core.application
-    id: grafana-app
+    state: absent
     identifiers: {slug: grafana}
-    attrs: {name: Grafana, provider: !KeyOf grafana-provider, meta_launch_url: "https://grafana.ops.home.arpa", policy_engine_mode: any}
-  - model: authentik_policies.policybinding
-    identifiers: {target: !KeyOf grafana-app, group: !Find [authentik_core.group, [name, admins]], order: 0}
+  - model: authentik_providers_oauth2.oauth2provider
+    state: absent
+    identifiers: {name: Grafana}
