@@ -1,0 +1,7 @@
+{
+  "ID": "authentik-metrics",
+  "Name": "authentik-metrics",
+  "Port": 9300,
+  "Tags": ["prometheus.scrape=true", "prometheus.path=/metrics"],
+  "Check": {"TCP": "127.0.0.1:9300", "Interval": "10s", "Timeout": "2s"}
+}

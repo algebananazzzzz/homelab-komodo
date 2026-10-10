@@ -44,6 +44,7 @@ services:
       AUTHENTIK_EMAIL__FROM: HomeLab <${SMTP_USERNAME:?}>
     ports:
       - "9000:9000/tcp"
+      - "9300:9300/tcp"
     healthcheck:
       test: ["CMD", "ak", "healthcheck"]
       interval: 10s

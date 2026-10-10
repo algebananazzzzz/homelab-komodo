@@ -35,6 +35,19 @@ services:
       retries: 20
     restart: unless-stopped
 
+  redis-exporter:
+    container_name: redis-exporter
+    image: oliver006/redis_exporter:v1.93.0
+    depends_on:
+      redis:
+        condition: service_healthy
+    environment:
+      REDIS_ADDR: redis://redis:6379
+      REDIS_PASSWORD: ${REDIS_PASSWORD:?}
+    ports:
+      - "9121:9121/tcp"
+    restart: unless-stopped
+
 volumes:
   redis-data:
     name: homelab-redis-data

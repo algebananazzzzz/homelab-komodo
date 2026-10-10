@@ -1,0 +1,7 @@
+{
+  "ID": "postgres-exporter",
+  "Name": "postgres-exporter",
+  "Port": 9187,
+  "Tags": ["prometheus.scrape=true", "prometheus.path=/metrics"],
+  "Check": {"TCP": "127.0.0.1:9187", "Interval": "10s", "Timeout": "2s"}
+}

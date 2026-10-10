@@ -1,0 +1,7 @@
+{
+  "ID": "redis-exporter",
+  "Name": "redis-exporter",
+  "Port": 9121,
+  "Tags": ["prometheus.scrape=true", "prometheus.path=/metrics"],
+  "Check": {"TCP": "127.0.0.1:9121", "Interval": "10s", "Timeout": "2s"}
+}
