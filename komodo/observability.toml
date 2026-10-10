@@ -52,3 +52,20 @@ ignore_services = ["register"]
 # Compose does not see bind-mounted config change, so a config edit must recreate the containers to take effect.
 config_files = ["config/loki.yml", "rules/fake/logs.yml", "consul/loki.json"]
 extra_args = ["--force-recreate"]
+
+[[stack]]
+name = "tempo"
+description = "Trace storage with OTLP intake on 4317 and 4318."
+tags = ["observability"]
+deploy = true
+
+[stack.config]
+server = "mgmt-obs-01"
+repo = "algebananazzzzz/homelab-komodo"
+branch = "main"
+run_directory = "stacks/observability/tempo"
+file_paths = ["compose.yml"]
+ignore_services = ["register"]
+# Compose does not see bind-mounted config change, so a config edit must recreate the containers to take effect.
+config_files = ["config/tempo.yml", "consul/tempo.json"]
+extra_args = ["--force-recreate"]
