@@ -25,6 +25,10 @@ schema_config:
         prefix: index_
         period: 24h
 
+# Loki rejects lines more than half this age behind their stream, so this sets how long an outage Fluent Bit's backlog survives.
+ingester:
+  max_chunk_age: 4h
+
 limits_config:
   retention_period: 168h
 
