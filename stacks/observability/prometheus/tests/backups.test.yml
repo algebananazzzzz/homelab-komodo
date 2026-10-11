@@ -1,0 +1,53 @@
+rule_files:
+  - ../rules/backups.yml
+evaluation_interval: 15s
+tests:
+  # postgres fails twice then recovers; volumes always succeeds.
+  - interval: 1m
+    input_series:
+      - series: 'backup_last_run_success{job="node",instance_name="svc-db-01",backup="postgres"}'
+        values: '1 1 0 0 1'
+      - series: 'backup_last_run_success{job="node",instance_name="svc-apps-01",backup="volumes"}'
+        values: '1x4'
+    alert_rule_test:
+      - eval_time: 1m
+        alertname: BackupFailed
+        exp_alerts: []
+      - eval_time: 2m
+        alertname: BackupFailed
+        exp_alerts:
+          - exp_labels: {severity: warning, job: node, instance_name: svc-db-01, backup: postgres}
+            exp_annotations:
+              summary: "The postgres backup on svc-db-01 failed"
+              description: 'The last postgres run on svc-db-01 failed. Its output is in Loki at {host="svc-db-01", unit=~"backup.*"}, or in journalctl on hv-01, which ships no logs.'
+              runbook_url: https://outline.algebananazzzzz.com/collection/runbooks
+      - eval_time: 4m
+        alertname: BackupFailed
+        exp_alerts: []
+
+  # postgres and mongo both last succeeded at t=0; only postgres's 3h max age runs out. postgres succeeds again at 5h.
+  - interval: 15m
+    input_series:
+      - series: 'backup_last_success_timestamp_seconds{job="node",instance_name="svc-db-01",backup="postgres"}'
+        values: '0x19 18000x4'
+      - series: 'backup_max_age_seconds{job="node",instance_name="svc-db-01",backup="postgres"}'
+        values: '10800x24'
+      - series: 'backup_last_success_timestamp_seconds{job="node",instance_name="mgmt-01",backup="mongo"}'
+        values: '0x24'
+      - series: 'backup_max_age_seconds{job="node",instance_name="mgmt-01",backup="mongo"}'
+        values: '93600x24'
+    alert_rule_test:
+      - eval_time: 3h
+        alertname: BackupStale
+        exp_alerts: []
+      - eval_time: 3h15m
+        alertname: BackupStale
+        exp_alerts:
+          - exp_labels: {severity: critical, job: node, instance_name: svc-db-01, backup: postgres}
+            exp_annotations:
+              summary: "The postgres backup on svc-db-01 last succeeded 3h 15m 0s ago"
+              description: 'The postgres backup on svc-db-01 has gone past its max age without a successful run, so its timer has stopped or every run is failing. Its output is in Loki at {host="svc-db-01", unit=~"backup.*"}, or in journalctl on hv-01, which ships no logs.'
+              runbook_url: https://outline.algebananazzzzz.com/collection/runbooks
+      - eval_time: 5h
+        alertname: BackupStale
+        exp_alerts: []

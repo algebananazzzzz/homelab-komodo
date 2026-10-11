@@ -1,0 +1,20 @@
+groups:
+  - name: backups
+    rules:
+      - alert: BackupFailed
+        expr: backup_last_run_success == 0
+        labels:
+          severity: warning
+        annotations:
+          summary: "The {{ $labels.backup }} backup on {{ $labels.instance_name }} failed"
+          description: 'The last {{ $labels.backup }} run on {{ $labels.instance_name }} failed. Its output is in Loki at {host="{{ $labels.instance_name }}", unit=~"backup.*"}, or in journalctl on hv-01, which ships no logs.'
+          runbook_url: https://outline.algebananazzzzz.com/collection/runbooks
+      # Each host publishes its own max age next to the timestamp, so the schedule lives only in homelab-ansible.
+      - alert: BackupStale
+        expr: time() - backup_last_success_timestamp_seconds > backup_max_age_seconds
+        labels:
+          severity: critical
+        annotations:
+          summary: "The {{ $labels.backup }} backup on {{ $labels.instance_name }} last succeeded {{ $value | humanizeDuration }} ago"
+          description: 'The {{ $labels.backup }} backup on {{ $labels.instance_name }} has gone past its max age without a successful run, so its timer has stopped or every run is failing. Its output is in Loki at {host="{{ $labels.instance_name }}", unit=~"backup.*"}, or in journalctl on hv-01, which ships no logs.'
+          runbook_url: https://outline.algebananazzzzz.com/collection/runbooks
