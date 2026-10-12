@@ -1,23 +1,4 @@
 [[stack]]
-name = "beaverhabits"
-description = "Habit tracker."
-tags = ["apps"]
-deploy = true
-
-[stack.config]
-server = "svc-apps-01"
-repo = "algebananazzzzz/homelab-komodo"
-branch = "main"
-run_directory = "stacks/apps/beaverhabits"
-file_paths = ["compose.yml"]
-ignore_services = ["register"]
-environment = """
-ADMIN_EMAIL='[[ADMIN_EMAIL]]'
-"""
-# A sync redeploys a stack only when a listed file changes, so every file the stack reads is listed.
-config_files = ["consul/beaverhabits.json"]
-
-[[stack]]
 name = "glance"
 description = "Dashboards at home.arpa and glance.algebananazzzzz.com."
 tags = ["apps"]
