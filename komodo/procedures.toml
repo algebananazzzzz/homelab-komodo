@@ -1,5 +1,4 @@
 # Komodo stays unreachable from GitHub, so it polls: a push to main deploys within 5 minutes without a webhook.
-# The sync only sees resources tagged homelab-komodo, and deletes any tagged one missing from these files. An untagged resource here is silently ignored.
 [[procedure]]
 name = "sync"
 description = "Apply the komodo/ directory of homelab-komodo."
