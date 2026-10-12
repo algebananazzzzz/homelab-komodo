@@ -27,6 +27,8 @@ services:
     <<: *authentik
     container_name: authentik
     command: server
+    labels:
+      homelab.backup-volumes: "true"
     depends_on:
       register:
         condition: service_completed_successfully

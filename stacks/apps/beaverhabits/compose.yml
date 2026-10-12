@@ -28,6 +28,8 @@ services:
       - "8082:8080/tcp"
     volumes:
       - data:/app/.user
+    labels:
+      homelab.backup-volumes: "true"
     restart: unless-stopped
 
 volumes:
