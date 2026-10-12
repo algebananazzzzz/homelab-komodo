@@ -1,7 +1,7 @@
 [[stack]]
 name = "postgres"
 description = "Shared PostgreSQL for app stacks."
-tags = ["database"]
+tags = ["database", "homelab-komodo"]
 deploy = true
 
 [stack.config]
@@ -21,7 +21,7 @@ config_files = ["consul/postgres.json", "consul/postgres-exporter.json", "initdb
 [[stack]]
 name = "redis"
 description = "Shared Redis for app stacks."
-tags = ["database"]
+tags = ["database", "homelab-komodo"]
 deploy = true
 
 [stack.config]

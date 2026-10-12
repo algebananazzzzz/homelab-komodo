@@ -1,7 +1,7 @@
 [[stack]]
 name = "prometheus"
 description = "Metrics, probes, and alert rules at prometheus.ops.home.arpa."
-tags = ["observability"]
+tags = ["observability", "homelab-komodo"]
 deploy = true
 
 [stack.config]
@@ -18,7 +18,7 @@ extra_args = ["--force-recreate"]
 [[stack]]
 name = "alertmanager"
 description = "Routes alerts to ntfy, at alertmanager.ops.home.arpa."
-tags = ["observability"]
+tags = ["observability", "homelab-komodo"]
 deploy = true
 
 [stack.config]
@@ -39,7 +39,7 @@ extra_args = ["--force-recreate"]
 [[stack]]
 name = "loki"
 description = "Log storage and log alert rules."
-tags = ["observability"]
+tags = ["observability", "homelab-komodo"]
 deploy = true
 
 [stack.config]
@@ -56,7 +56,7 @@ extra_args = ["--force-recreate"]
 [[stack]]
 name = "tempo"
 description = "Trace storage with OTLP intake on 4317 and 4318."
-tags = ["observability"]
+tags = ["observability", "homelab-komodo"]
 deploy = true
 
 [stack.config]
@@ -73,7 +73,7 @@ extra_args = ["--force-recreate"]
 [[stack]]
 name = "grafana"
 description = "Dashboards and Explore at grafana.ops.home.arpa."
-tags = ["observability"]
+tags = ["observability", "homelab-komodo"]
 deploy = true
 
 [stack.config]

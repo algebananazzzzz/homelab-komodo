@@ -1,7 +1,7 @@
 [[stack]]
 name = "glance"
 description = "Dashboards at home.arpa and glance.algebananazzzzz.com."
-tags = ["apps"]
+tags = ["apps", "homelab-komodo"]
 deploy = true
 
 [stack.config]
@@ -18,7 +18,7 @@ extra_args = ["--force-recreate"]
 [[stack]]
 name = "kaneo"
 description = "Kanban boards at kaneo.algebananazzzzz.com."
-tags = ["apps"]
+tags = ["apps", "homelab-komodo"]
 deploy = true
 
 [stack.config]
@@ -41,7 +41,7 @@ config_files = ["consul/kaneo.json"]
 [[stack]]
 name = "ntfy"
 description = "Push notifications at ntfy.algebananazzzzz.com."
-tags = ["apps"]
+tags = ["apps", "homelab-komodo"]
 deploy = true
 
 [stack.config]
@@ -64,7 +64,7 @@ config_files = ["consul/ntfy.json"]
 [[stack]]
 name = "outline"
 description = "Wiki at outline.algebananazzzzz.com."
-tags = ["apps"]
+tags = ["apps", "homelab-komodo"]
 deploy = true
 
 [stack.config]
@@ -92,7 +92,7 @@ config_files = ["consul/outline.json"]
 [[stack]]
 name = "windmill"
 description = "Scripts and schedules at windmill.algebananazzzzz.com."
-tags = ["apps"]
+tags = ["apps", "homelab-komodo"]
 deploy = true
 
 [stack.config]
