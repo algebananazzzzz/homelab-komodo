@@ -12,7 +12,7 @@ run_directory = "stacks/observability/prometheus"
 file_paths = ["compose.yml"]
 ignore_services = ["register"]
 # Compose does not see bind-mounted config change, so a config edit must recreate the containers to take effect.
-config_files = ["config/prometheus.yml", "config/blackbox.yml", "consul/prometheus.json", "rules/recording.yml", "rules/symptoms.yml", "rules/hosts.yml", "rules/containers.yml", "rules/dependencies.yml", "rules/pipeline.yml"]
+config_files = ["config/prometheus.yml", "config/blackbox.yml", "consul/prometheus.json", "rules/recording.yml", "rules/symptoms.yml", "rules/hosts.yml", "rules/containers.yml", "rules/dependencies.yml", "rules/pipeline.yml", "rules/backups.yml"]
 extra_args = ["--force-recreate"]
 
 [[stack]]
