@@ -64,7 +64,7 @@ tests:
         values: '864000x5'
       - series: 'probe_ssl_earliest_cert_expiry{instance="https://outline.algebananazzzzz.com"}'
         values: '172800x5'
-      - series: 'probe_ssl_earliest_cert_expiry{instance="https://windmill.algebananazzzzz.com"}'
+      - series: 'probe_ssl_earliest_cert_expiry{instance="https://sso.algebananazzzzz.com"}'
         values: '5184000x5'
     alert_rule_test:
       - eval_time: 0m

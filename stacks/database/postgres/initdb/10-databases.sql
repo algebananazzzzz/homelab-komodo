@@ -2,4 +2,3 @@
 CREATE DATABASE authentik;
 CREATE DATABASE kaneo;
 CREATE DATABASE outline;
-CREATE DATABASE windmill;

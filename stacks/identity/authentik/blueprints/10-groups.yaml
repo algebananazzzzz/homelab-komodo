@@ -15,9 +15,10 @@ entries:
   - model: authentik_core.group
     identifiers: {name: app-komodo}
     attrs: {is_superuser: false}
+  # Windmill is gone; absent deletes the group, since dropping an entry leaves its object in place.
   - model: authentik_core.group
+    state: absent
     identifiers: {name: app-windmill}
-    attrs: {is_superuser: false}
   - model: authentik_core.group
     identifiers: {name: app-outline}
     attrs: {is_superuser: false}

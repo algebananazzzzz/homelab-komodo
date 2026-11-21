@@ -9,7 +9,6 @@ x-glance: &glance
     TZ: Asia/Singapore
     KANEO_HOSTNAME: kaneo.algebananazzzzz.com
     OUTLINE_HOSTNAME: outline.algebananazzzzz.com
-    WINDMILL_HOSTNAME: windmill.algebananazzzzz.com
     AUTHENTIK_HOSTNAME: sso.algebananazzzzz.com
   volumes:
     - ./config:/app/config:ro

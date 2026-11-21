@@ -35,9 +35,9 @@ tests:
 
   - interval: 1m
     input_series:
-      - series: 'container_cpu_cfs_periods_total{instance_name="svc-apps-01",name="windmill-worker"}'
+      - series: 'container_cpu_cfs_periods_total{instance_name="svc-apps-01",name="authentik-worker"}'
         values: '0+600x25'
-      - series: 'container_cpu_cfs_throttled_periods_total{instance_name="svc-apps-01",name="windmill-worker"}'
+      - series: 'container_cpu_cfs_throttled_periods_total{instance_name="svc-apps-01",name="authentik-worker"}'
         values: '0+300x25'
       - series: 'container_cpu_cfs_periods_total{instance_name="svc-apps-01",name="kaneo"}'
         values: '0+600x25'
@@ -50,8 +50,8 @@ tests:
       - eval_time: 21m
         alertname: ContainerCPUThrottled
         exp_alerts:
-          - exp_labels: {severity: info, instance_name: svc-apps-01, name: windmill-worker}
+          - exp_labels: {severity: info, instance_name: svc-apps-01, name: authentik-worker}
             exp_annotations:
-              summary: "windmill-worker on svc-apps-01 is CPU-throttled 50% of the time"
-              description: "windmill-worker keeps hitting its CPU limit."
+              summary: "authentik-worker on svc-apps-01 is CPU-throttled 50% of the time"
+              description: "authentik-worker keeps hitting its CPU limit."
               runbook_url: https://outline.algebananazzzzz.com/collection/runbooks

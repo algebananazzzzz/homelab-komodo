@@ -98,24 +98,13 @@ entries:
   - model: authentik_policies.policybinding
     identifiers: {target: !KeyOf komodo-app, group: !Find [authentik_core.group, [name, app-komodo]], order: 1}
 
-  # Windmill
-  - model: authentik_providers_oauth2.oauth2provider
-    id: windmill-provider
-    identifiers: {name: Windmill}
-    attrs:
-      <<: *provider
-      client_id: windmill
-      client_secret: !Env WINDMILL_OIDC_CLIENT_SECRET
-      redirect_uris:
-        - {matching_mode: strict, url: "https://windmill.algebananazzzzz.com/user/login_callback/authentik"}
+  # Windmill is gone; absent deletes these, since dropping an entry leaves its object in place.
   - model: authentik_core.application
-    id: windmill-app
+    state: absent
     identifiers: {slug: windmill}
-    attrs: {name: Windmill, provider: !KeyOf windmill-provider, meta_launch_url: "https://windmill.algebananazzzzz.com", policy_engine_mode: any}
-  - model: authentik_policies.policybinding
-    identifiers: {target: !KeyOf windmill-app, group: !Find [authentik_core.group, [name, admins]], order: 0}
-  - model: authentik_policies.policybinding
-    identifiers: {target: !KeyOf windmill-app, group: !Find [authentik_core.group, [name, app-windmill]], order: 1}
+  - model: authentik_providers_oauth2.oauth2provider
+    state: absent
+    identifiers: {name: Windmill}
 
   # Corum
   - model: authentik_providers_oauth2.oauth2provider

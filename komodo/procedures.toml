@@ -50,5 +50,4 @@ executions = [
   { execution.type = "DeployStack", execution.params.stack = "kaneo", execution.params.services = [] },
   { execution.type = "DeployStack", execution.params.stack = "outline", execution.params.services = [] },
   { execution.type = "DeployStack", execution.params.stack = "glance", execution.params.services = [] },
-  { execution.type = "DeployStack", execution.params.stack = "windmill", execution.params.services = [] },
 ]
