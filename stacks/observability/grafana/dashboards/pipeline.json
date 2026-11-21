@@ -163,38 +163,6 @@
       }
     },
     {
-      "id": 5,
-      "type": "timeseries",
-      "title": "Spans received by Tempo",
-      "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
-      },
-      "gridPos": {
-        "x": 12,
-        "y": 17,
-        "w": 12,
-        "h": 8
-      },
-      "targets": [
-        {
-          "refId": "A",
-          "datasource": {
-            "type": "prometheus",
-            "uid": "prometheus"
-          },
-          "expr": "sum(rate(tempo_distributor_spans_received_total[5m]))",
-          "legendFormat": "spans/s"
-        }
-      ],
-      "fieldConfig": {
-        "defaults": {
-          "unit": "short"
-        },
-        "overrides": []
-      }
-    },
-    {
       "id": 6,
       "type": "timeseries",
       "title": "Prometheus active series",
@@ -203,8 +171,8 @@
         "uid": "prometheus"
       },
       "gridPos": {
-        "x": 0,
-        "y": 25,
+        "x": 12,
+        "y": 17,
         "w": 12,
         "h": 8
       },
@@ -235,7 +203,7 @@
         "uid": "prometheus"
       },
       "gridPos": {
-        "x": 12,
+        "x": 0,
         "y": 25,
         "w": 12,
         "h": 8
